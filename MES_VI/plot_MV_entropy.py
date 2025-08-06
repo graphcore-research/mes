@@ -1,10 +1,8 @@
-from pathlib import Path
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-from gp import GaussianProcess1D, se_kernel
-from kde import fit_kde
+from .gp import GaussianProcess1D, se_kernel
+from .kde import fit_kde
 
 
 
@@ -13,6 +11,8 @@ def plot_gp_and_kde(
     y_train: np.ndarray,
     n_samples:int=100,
     n_x:int=101,
+    y_min:float=-4,
+    y_max:float=6,
 ) -> tuple[plt.figure, float]:
     """
     Plot the GP and KDE for a 1D regression problem.
@@ -31,16 +31,11 @@ def plot_gp_and_kde(
 
     # points and ranges for (x, y) plotting
     x_min, x_max = np.min(x_train), np.max(x_train)
-    y_min, y_max = np.min(y_train), np.max(y_train)
     dx = x_max - x_min
-    dy = y_max - y_min
 
     # add some padding to the plot
     x_min -= 0.2 * dx
     x_max += 0.2 * dx
-    y_min -= 0.2 * dy
-    y_max += 0.2 * dy
-
     x_plot = np.linspace(x_min, x_max, n_x)
 
     # Model and predict
@@ -49,6 +44,7 @@ def plot_gp_and_kde(
     y_sd = np.sqrt(np.diag(y_cov))
 
     # Sample random functions/walks consistent with the data points
+    np.random.seed(10)
     y_samples = gp.sample_posterior(x_plot, n_samples=n_samples)
     y_star_samples = np.max(y_samples, axis=0)
 
@@ -60,15 +56,17 @@ def plot_gp_and_kde(
 
     # Subplot 1/2: plot the GP and the training data
     ax = axes[0]
-    ax.plot(x_train, y_train, 'o', label='Training data')
-    ax.plot(x_plot, y_plot, label='GP mean', color='k', zorder=10)
     ax.fill_between(x_plot, y_plot - y_sd, y_plot + y_sd, alpha=0.2)
-
+    label_samples = "sampled functions"
+    label_peaks = "sample peaks"
     for y_sample in y_samples.T:
-        ax.plot(x_plot, y_sample, 'r-', alpha=0.1)
+        ax.plot(x_plot, y_sample, 'r-', alpha=0.1, label=label_samples)
         i_top = np.argmax(y_sample)
-        ax.scatter(x_plot[i_top], y_sample[i_top], color='b', alpha=0.2, s=10, zorder=10)
+        ax.scatter(x_plot[i_top], y_sample[i_top], color='b', alpha=0.2, s=10, zorder=10, label=label_peaks)
+        label_samples, label_peaks = None, None
 
+    ax.plot(x_plot, y_plot, label='GP mean', color='k')
+    ax.plot(x_train, y_train, 'o', label='Training data')
     ax.set_ylim(y_min, y_max)
     ax.legend()
 

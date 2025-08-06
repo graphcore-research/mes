@@ -6,8 +6,9 @@ setup(
     description="Playing with MES on toy settings",
     packages=find_packages(include=["MES_VI"]),
     install_requires=[
-        "numpy",
+        "imageio",
         "matplotlib",
+        "numpy",
         "scipy",
     ],
     python_requires=">=3.12",
