@@ -1,0 +1,83 @@
+import numpy as np
+
+
+class GaussianProcess1D:
+    """1D Gaussian Process regression with Cholesky inference.
+
+    Attributes:
+        X_train: 1D numpy array of training inputs.
+        y_train: 1D numpy array of training targets.
+        kernel: Callable kernel function k(x, x').
+        noise: Scalar noise level added to the diagonal.
+    """
+
+    def __init__(self, x_train, y_train, kernel, noise=1e-6):
+        """Initializes the GP with training data and a kernel.
+
+        Args:
+            X_train: 1D numpy array of training inputs.
+            y_train: 1D numpy array of training targets.
+            kernel: A callable kernel function k(x, x').
+            noise: Gaussian noise level (default is 1e-6).
+        """
+        self.x_train = x_train.reshape(-1, 1)
+        self.y_train = y_train
+        self.kernel = kernel
+        self.noise = noise
+        self._fit()
+
+    def _fit(self):
+        """Computes the Cholesky decomposition of the kernel matrix."""
+        K = self.kernel(self.x_train, self.x_train)
+        K += self.noise * np.eye(len(self.x_train))
+        self.L = np.linalg.cholesky(K)
+        self.alpha = np.linalg.solve(
+            self.L.T, np.linalg.solve(self.L, self.y_train)
+        )
+
+    def predict(self, X_test):
+        """Predicts the mean and variance at test inputs.
+
+        Args:
+            X_test: 1D numpy array of test inputs.
+
+        Returns:
+            Tuple of (mean, variance) arrays at the test inputs.
+        """
+        X_test = X_test.reshape(-1, 1)
+        K_s = self.kernel(self.x_train, X_test)
+        K_ss = self.kernel(X_test, X_test)
+
+        mean = K_s.T @ self.alpha
+        v = np.linalg.solve(self.L, K_s)
+        cov = K_ss - v.T @ v
+
+        return mean, cov
+
+    def sample_posterior(self, x_test, n_samples=1, seed:int=0):
+        """Draws samples from the posterior at test inputs.
+
+        Args:
+            X_test: 1D numpy array of test inputs.
+            n_samples: Number of posterior samples to draw.
+
+        Returns:
+            Samples: A (n_test, n_samples) array of function samples.
+        """
+        np.random.seed(seed)
+        mean, cov = self.predict(x_test)
+        
+        cov += 1e-8 * np.eye(len(x_test))  # stability
+        samples = np.random.multivariate_normal(
+            mean, cov, size=n_samples
+        ).T
+        return samples
+
+
+def se_kernel(x1: np.ndarray, x2: np.ndarray, l: float = 1.0, sigma_f: float = 1.0) -> np.ndarray:
+    """
+    Isotropic squared exponential kernel.
+    """
+    _x1 = x1.reshape(-1, 1)
+    _x2 = x2.reshape(1, -1)
+    return sigma_f**2 * np.exp(-0.5 * (_x1 - _x2)**2 / l**2)
