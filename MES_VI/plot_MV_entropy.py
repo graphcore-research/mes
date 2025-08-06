@@ -13,6 +13,7 @@ def plot_gp_and_kde(
     n_x:int=101,
     y_min:float=-4,
     y_max:float=6,
+    kde_dens_max:float=5
 ) -> tuple[plt.figure, float]:
     """
     Plot the GP and KDE for a 1D regression problem.
@@ -77,7 +78,7 @@ def plot_gp_and_kde(
     ax.plot(y_kde_densities, y_kde_points, label=f'KDE {kde.entropy:.3f}')
     ax.scatter([0] * n_samples, y_star_samples, color='b', alpha=0.2, s=10, zorder=10)
     ax.set_ylim(y_min, y_max)
-    ax.set_xlim(-0.2, max(y_kde_densities) * 1.1)
+    ax.set_xlim(-0.2, kde_dens_max)
     ax.legend()
 
     return fig, kde.entropy
