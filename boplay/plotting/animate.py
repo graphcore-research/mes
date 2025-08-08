@@ -10,7 +10,7 @@ def animate_files(frames_dir: Path, output_filename: Path) -> None:
 
     filenames = sorted(frames_dir.glob('*.png'))
 
-    with imageio.get_writer(output_filename, mode="I", duration=5.5, loop=0) as writer:
+    with imageio.get_writer(output_filename, mode="I", duration=500, loop=0) as writer:
         for output_filename in filenames:
             image = imageio.imread(output_filename)
             writer.append_data(image)

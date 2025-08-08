@@ -10,6 +10,7 @@ setup(
         "matplotlib",
         "numpy",
         "scipy",
+        "scikit-learn",
     ],
     python_requires=">=3.12",
     include_package_data=True,

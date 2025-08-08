@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class GaussianProcess1D:
+class GaussianProcess:
     """1D Gaussian Process regression with Cholesky inference.
 
     Attributes:
@@ -11,31 +11,46 @@ class GaussianProcess1D:
         noise: Scalar noise level added to the diagonal.
     """
 
-    def __init__(self, x_train, y_train, kernel, noise=1e-6):
+    def __init__(
+        self,
+        *,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        kernel: callable,
+        noise: float = 1e-6,
+    ) -> None:
         """Initializes the GP with training data and a kernel.
 
         Args:
-            X_train: 1D numpy array of training inputs.
-            y_train: 1D numpy array of training targets.
+            X_train: d-dimensional numpy array of training inputs.
+            y_train: 1-dimensional numpy array of training targets.
             kernel: A callable kernel function k(x, x').
             noise: Gaussian noise level (default is 1e-6).
         """
-        self.x_train = x_train.reshape(-1, 1)
+        x_train = np.asarray(x_train)
+        y_train = np.asarray(y_train).reshape(-1, 1)
+
+        assert len(x_train.shape) == 2, "x must be a matrix"
+
+        assert x_train.shape[0] == y_train.shape[0], "x and y must have the same number of rows"
+
+        self.x_train = x_train
         self.y_train = y_train
         self.kernel = kernel
         self.noise = noise
+        self.x_dim = x_train.shape[1]
         self._fit()
 
     def _fit(self):
         """Computes the Cholesky decomposition of the kernel matrix."""
-        K = self.kernel(self.x_train, self.x_train)
-        K += self.noise * np.eye(len(self.x_train))
-        self.L = np.linalg.cholesky(K)
+        k = self.kernel(self.x_train, self.x_train)
+        k += self.noise * np.eye(len(self.x_train))
+        self.L = np.linalg.cholesky(k)
         self.alpha = np.linalg.solve(
             self.L.T, np.linalg.solve(self.L, self.y_train)
         )
 
-    def predict(self, X_test):
+    def predict(self, *, x_test: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Predicts the mean and variance at test inputs.
 
         Args:
@@ -44,17 +59,24 @@ class GaussianProcess1D:
         Returns:
             Tuple of (mean, variance) arrays at the test inputs.
         """
-        X_test = X_test.reshape(-1, 1)
-        K_s = self.kernel(self.x_train, X_test)
-        K_ss = self.kernel(X_test, X_test)
 
-        mean = K_s.T @ self.alpha
-        v = np.linalg.solve(self.L, K_s)
-        cov = K_ss - v.T @ v
+        x_test = x_test.reshape(-1, self.x_dim)
+        k_s = self.kernel(self.x_train, x_test)
+        k_ss = self.kernel(x_test, x_test)
+
+        mean = k_s.T @ self.alpha
+        v = np.linalg.solve(self.L, k_s)
+        cov = k_ss - v.T @ v
 
         return mean, cov
 
-    def sample_posterior(self, x_test, n_samples=1, seed:int=0):
+    def sample_posterior(
+        self,
+        *,
+        x_test: np.ndarray,
+        n_samples: int = 1,
+        seed: int = 0,
+    ) -> np.ndarray:
         """Draws samples from the posterior at test inputs.
 
         Args:
@@ -72,12 +94,3 @@ class GaussianProcess1D:
             mean, cov, size=n_samples
         ).T
         return samples
-
-
-def se_kernel(x1: np.ndarray, x2: np.ndarray, l: float = 1.0, sigma_f: float = 1.0) -> np.ndarray:
-    """
-    Isotropic squared exponential kernel.
-    """
-    _x1 = x1.reshape(-1, 1)
-    _x2 = x2.reshape(1, -1)
-    return sigma_f**2 * np.exp(-0.5 * (_x1 - _x2)**2 / l**2)

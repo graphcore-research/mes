@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
-from MES_VI.plot_MV_entropy import plot_gp_and_kde
-from MES_VI.animate import animate_files
+from boplay.plotting.plot_MV_entropy import plot_gp_and_kde
+from boplay.plotting.animate import animate_files
 
 # Folders
 ROOT_DIR = Path(__file__).parent

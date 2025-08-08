@@ -21,6 +21,22 @@ def se_kernel(
     return sigma_f**2 * np.exp(scale * diff)
 
 
+def min_kernel(x1, x2, len_scale=10.0, sigma_f=1.0):
+    """
+    Min kernel.
+    """
+    _x1 = np.tile(x1.reshape(-1, 1, 1), (1, x2.shape[0], 1))
+    _x2 = np.tile(x2.reshape(1, -1, 1), (x1.shape[0], 1, 1))
+
+    diff = np.concatenate((_x1, _x2), axis=2)
+    diff = np.min(diff, axis=2)
+
+    assert diff.shape == (x1.shape[0], x2.shape[0])
+
+    return diff
+
+
 KERNELS = {
     "se": se_kernel,
+    "min": min_kernel,
 }

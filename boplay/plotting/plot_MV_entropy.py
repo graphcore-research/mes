@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .gp import GaussianProcess1D, se_kernel
-from .kde import fit_kde
+from ..gp import GaussianProcess1D
+from ..kernels import KERNELS
+from ..kde import fit_kde
 
 
 

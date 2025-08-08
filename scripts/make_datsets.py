@@ -27,10 +27,10 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 if __name__ == "__main__":
     # make 1D dataset
     benchmark_new = make_benchmark_data(
-        n_x=101,
+        n_x=201,
         n_y=1000,
         kernel_type="se",
-        kernel_params={"len_scale": 10.0, "sigma_f": 1.0},
+        kernel_params={"len_scale": 3.0, "sigma_f": 1.0},
         x_min=[0],
         x_max=[100],
     )
@@ -40,8 +40,8 @@ if __name__ == "__main__":
 
     # plot the dataset
     fig, ax = plt.subplots(figsize=(10, 5))
-    for i in range(20):
-        ax.plot(benchmark.x, benchmark.y[:, i], color="gray", alpha=0.5)
+    for i in range(10):
+        ax.plot(benchmark.x, benchmark.y[i, :], color="gray", alpha=0.5)
 
     fig.savefig(DATA_DIR / "1d_dataset.png")
 

@@ -81,10 +81,10 @@ def _make_y_data(
 
     mean_vector = np.zeros(x_grid.shape[0])
     cov_matrix = kernel(x_grid, x_grid)
-    y_grid = np.random.multivariate_normal(mean_vector, cov_matrix, size=n_y).T
+    y_grid = np.random.multivariate_normal(mean_vector, cov_matrix, size=n_y)
 
-    assert y_grid.shape[0] == x_grid.shape[0], "y_grid must have the same number of rows as x_grid"
-    assert y_grid.shape[1] == n_y, "y_grid must have n_y columns"
+    assert y_grid.shape[1] == x_grid.shape[0], "y_grid cols != x_grid rows"
+    assert y_grid.shape[0] == n_y, "y_grid must have n_y rows"
 
     return y_grid
 
