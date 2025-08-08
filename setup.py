@@ -4,7 +4,7 @@ setup(
     name="MES edge case checking",
     version="0.1.0",
     description="Playing with MES on toy settings",
-    packages=find_packages(include=["MES_VI"]),
+    packages=find_packages("."),
     install_requires=[
         "imageio",
         "matplotlib",
