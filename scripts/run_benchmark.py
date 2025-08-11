@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from itertools import product
+from itertools import product, chain
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
@@ -109,13 +109,13 @@ if __name__ == "__main__":
     param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims))
     n_sweeps = len(param_combinations)
     with Pool(processes=cpu_count()) as pool:
-        results = list(
-            tqdm(
-                pool.imap_unordered(_process_hyperparams, param_combinations),
-                total=n_sweeps,
-            )
+        # Run sweep in parallel, futures are evaluated lazily.
+        # We don't care what order the futures return in.
+        futures = tqdm(
+            pool.imap_unordered(_process_hyperparams, param_combinations),
+            total=n_sweeps,
         )
+        results = list(chain.from_iterable(futures)) # flatten & evaluate
 
-    results = [x for xs in results for x in xs]  # flatten
     results_df = pd.DataFrame(results)
     results_df.to_json(DATA_DIR / "benchmark_df.json")
