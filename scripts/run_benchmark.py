@@ -42,7 +42,7 @@ def _make_benchmark_from_hps(kernel, len_scale, n_dim):
 
 def _make_kernel(benchmark: Benchmark):
     kernel_func = KERNELS[benchmark.kernel]
-    return lambda x1, x2: kernel_func(x1, x2, **benchmark.kernel_params)
+    return partial(kernel_func, **benchmark.kernel_params)
 
 
 def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
