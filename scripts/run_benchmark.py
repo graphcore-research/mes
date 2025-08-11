@@ -109,17 +109,13 @@ if __name__ == "__main__":
     param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims))
     n_sweeps = len(param_combinations)
     with Pool(processes=cpu_count()) as pool:
-        all_results = list(
+        results = list(
             tqdm(
-                pool.imap(_process_hyperparams, param_combinations),
+                pool.imap_unordered(_process_hyperparams, param_combinations),
                 total=n_sweeps,
             )
         )
 
-    # Flatten the results
-    results = []
-    for result_batch in all_results:
-        results.extend(result_batch)
-
+    results = [x for xs in results for x in xs]  # flatten
     results_df = pd.DataFrame(results)
     results_df.to_json(DATA_DIR / "benchmark_df.json")
