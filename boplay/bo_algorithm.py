@@ -61,13 +61,18 @@ class BayesianOptimization:
         self.y_max_history = []
 
         self.state_history = []
+    
+    def _update_model(self) -> None:
+        self.model = GaussianProcess(
+            x_train=self.x_train,
+            y_train=self.y_train,
+            kernel=self.kernel,
+        )
+        self.y_mean, self.y_cov = self.model.predict(x_test=self.x_grid)
+        self.y_best = np.max(self.y_train)
 
     def _select_next_point(self) -> int:
         # compute mean, cov, acq fun and save as attributes
-        start_predict_and_acquire_time = time.time()
-        self.y_mean, self.y_cov = self.model.predict(x_test=self.x_grid)
-        self.y_best = np.max(self.y_train)
-        start_acquire_time = time.time()
         self.acq_fun_vals = self.acq_fun(
             x_grid=self.x_grid,
             y_mean=self.y_mean.reshape(-1),
@@ -110,15 +115,12 @@ class BayesianOptimization:
         self.idx_train = idx_init
         self.x_train = self.x_grid[self.idx_train]
         self.y_train = self.y_true[self.idx_train]
+        self._update_model()
+
         self.y_max_history.append([len(self.y_train), np.max(self.y_train)])
 
         for _ in range(self.n_init, self.n_final):
             # fit a model to the points we have so far
-            self.model = GaussianProcess(
-                x_train=self.x_train,
-                y_train=self.y_train,
-                kernel=self.kernel,
-            )
 
             # select the next point
             idx_new = self._select_next_point()
@@ -131,6 +133,7 @@ class BayesianOptimization:
             # update the algorithm training data
             self.x_train = np.vstack((self.x_train, x_new))
             self.y_train = np.vstack((self.y_train, y_new))
+            self._update_model()
 
             n, y_max = len(self.y_train), np.max(self.y_train)
             y_max_diff = self.y_true_max - y_max

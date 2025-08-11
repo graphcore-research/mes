@@ -9,6 +9,15 @@ def se_kernel(
 ) -> np.ndarray:
     """
     Isotropic squared exponential kernel.
+
+    Args:
+        x1: np.ndarray, shape (n1, d)
+        x2: np.ndarray, shape (n2, d)
+        len_scale: float, length scale
+        sigma_f: float, signal variance
+
+    Returns:
+        np.ndarray, shape (n1, n2)
     """
     assert len(x1.shape) == 2, "x1 must be a a matrix"
     assert len(x2.shape) == 2, "x2 must be a a matrix"
@@ -21,10 +30,14 @@ def se_kernel(
     return sigma_f**2 * np.exp(scale * diff)
 
 
-def min_kernel(x1, x2, len_scale=10.0, sigma_f=1.0):
+def min_kernel(x1, x2, **kwargs):
     """
     Min kernel.
     """
+    assert len(x1.shape) == 2, "x1 must be a a matrix"
+    assert len(x2.shape) == 2, "x2 must be a a matrix"
+    assert x1.shape[1] == 1 and x2.shape[1] == 1, "x1 and x2 must be 1D arrays"
+
     _x1 = np.tile(x1.reshape(-1, 1, 1), (1, x2.shape[0], 1))
     _x2 = np.tile(x2.reshape(1, -1, 1), (x1.shape[0], 1, 1))
 
