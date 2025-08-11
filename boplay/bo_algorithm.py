@@ -60,7 +60,7 @@ class BayesianOptimization:
         self.y_max_history = []
 
         self.state_history = []
-    
+
     def _update_model(self) -> None:
         self.model = GaussianProcess(
             x_train=self.x_train,
@@ -86,13 +86,13 @@ class BayesianOptimization:
 
         # select the point with the highest acq fun value
         return np.argmax(acq_fun_vals_masked)
-    
+
     def _get_initial_points(self) -> list[int]:
         """
         Get a list of indices of the initial points.
         """
         return np.random.choice(self.x_grid.shape[0], size=self.n_init, replace=False)
-    
+
     def _update_history(self) -> None:
         self.state_history.append(
             {
@@ -131,5 +131,7 @@ class BayesianOptimization:
 
             n, y_max = len(self.y_train), np.max(self.y_train)
             y_max_diff = self.y_true_max - y_max
+            # print(f"Iteration {n},  y_max: {y_max},  y_max_diff: {y_max_diff}")
 
-            print(f"Iteration {n},  y_max: {y_max},  y_max_diff: {y_max_diff}")
+            self.y_max_history.append([len(self.y_train), y_max])
+

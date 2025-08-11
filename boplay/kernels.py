@@ -22,7 +22,7 @@ def se_kernel(
     assert len(x1.shape) == 2, "x1 must be a a matrix"
     assert len(x2.shape) == 2, "x2 must be a a matrix"
     assert x1.shape[1] == x2.shape[1], "x1 and x2 must have the same dimension"
-    
+
     # (n1, 1, d) - (1, n2, d) -> (n1, n2, d)
     diff = (x1[:, None, :] - x2[None, :, :])**2
     diff = diff.sum(axis=2)
@@ -51,5 +51,5 @@ def min_kernel(x1, x2, **kwargs):
 
 KERNELS = {
     "se": se_kernel,
-    "min": min_kernel,
+    # "min": min_kernel,
 }
