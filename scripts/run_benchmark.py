@@ -1,4 +1,3 @@
-import pickle
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -25,6 +24,7 @@ print(f"Running {n_sweeps} sweeps")
 # n_x increases with dimensionality. E.g. in 2D n_x = 200 => 200**2 points.
 n_total_samples = 256
 n_y = 100  # Run quick
+n_init, n_final = 4, 50
 
 
 def _make_benchmark_from_hps(kernel, len_scale, n_dim):
@@ -47,6 +47,9 @@ def _make_kernel(benchmark: Benchmark):
 
 
 def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
+    """
+    Fit a bayesian for each of the synthetic functions in benchmark.
+    """
     x_grid = benchmark.x
     n_test_funs, _ = benchmark.y.shape
     bos = []
@@ -59,8 +62,8 @@ def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
             y_true=y_true,
             kernel=kernel,
             acq_fun=acq_func,
-            n_init=4,
-            n_final=50,
+            n_init=n_init,
+            n_final=n_final,
             seed=0,
         )
         bo.run()
@@ -68,49 +71,37 @@ def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
     return bos
 
 
-# Keep original pickle format for full reproducibility
-pickle_results = {
-    "meta": {"n_total_samples": n_total_samples, "n_y": n_y},
-    "data": {},
-    "y_max_history": {},
-}
-
-# Also collect structured data for pandas DataFrame
-pd_results = []
-
+results = []
 for acq_type, kernel_type, len_scale, n_dim in tqdm(
     product(acq_types, kernel_types, len_scales, n_dims), total=n_sweeps
 ):
     benchmark = _make_benchmark_from_hps(kernel_type, len_scale, n_dim)
     bos = _fit(acq_type, benchmark)
 
-    # Store in original format for pickle
-    name = f"{acq_type}-{kernel_type}-{n_dim}D-{len_scale}_len_scale"
-    pickle_data = {"name": name, "bos": bos, "benchmark": benchmark}
-    pickle_results["data"][name] = pickle_data
-
-    # Create one row per test function (bo run)
+    # Each row of dataframe is a single BO algorithm
+    # We use batch (B) as the number of synthetic functions (n_y)
+    # Iteration size (T) = n_final - n_init
+    # y_true_max: Ground truth y_max, best possible point on the curve
+    # final_y_max: Result from final convergence. (y_max_history[:, -1])
+    # y_max_history: Full dataset of convergence over T iterations steps for all functions.
+    # steps: range(n_init, n_final)
     y_true_max = np.max(benchmark.y, axis=1)
     for i, bo in enumerate(bos):
         steps, y_max_history = zip(*bo.y_max_history)
         final_y_max = y_max_history[-1]
-
-        pd_data = {
+        row = {
             "acq_func": acq_type,
             "kernel_type": kernel_type,
             "len_scale": len_scale,
             "n_dim": n_dim,
             "run_id": i,
-            "y_true_max": y_true_max[i],
-            "final_y_max": final_y_max,
-            "y_max_history": y_max_history,
-            "steps": steps,
+            "y_true_max": y_true_max[i],  # (B,)
+            "final_y_max": final_y_max,  # (B,)
+            "y_max_history": y_max_history,  # (B, T)
+            "steps": steps,  # (B, T)
         }
-        pd_results.append(pd_data)
+        results.append(row)
 
 
-results_df = pd.DataFrame(pd_results)
+results_df = pd.DataFrame(results)
 results_df.to_json(DATA_DIR / "benchmark_df.json")
-
-with open(DATA_DIR / "benchmark_data.pickle", "wb") as f:
-    pickle.dump(pd_results, f)
