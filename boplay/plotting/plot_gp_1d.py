@@ -66,7 +66,8 @@ def plot_bo_history_1d(
 ) -> None:
 
     with TemporaryDirectory() as tmp_dir:
-        tmp_dir = "/home/ubuntu/nethome-us-west-1/michaelp/MES_VI/bo_frames"
+        tmp_dir = f"{Path(__file__).parent.parent.parent}/frames/bo_frames"
+        # tmp_dir = "/home/ubuntu/nethome-us-west-1/michaelp/MES_VI/bo_frames"
         tmp_dir = Path(tmp_dir)
         for file in tmp_dir.glob("*.png"):
             file.unlink()
