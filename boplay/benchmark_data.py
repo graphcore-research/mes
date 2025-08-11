@@ -9,7 +9,7 @@ from boplay.kernels import KERNELS
 
 @dataclass
 class Benchmark:
-    """ A benchmark data set for BO methods """ 
+    """ A benchmark data set for BO methods """
     x : np.ndarray
     y : np.ndarray
     n_x: int
@@ -35,7 +35,7 @@ class Benchmark:
         """Load from a JSON file into a Config instance."""
         with open(path) as f:
             data = json.load(f)
-        
+
         data["x"] = np.asarray(data["x"])
         data["y"] = np.asarray(data["y"])
         data["x_min"] = np.asarray(data["x_min"])
@@ -46,7 +46,7 @@ class Benchmark:
 
 def _make_x_grid(*, n: int, x_min: list[float], x_max: list[float]) -> np.ndarray:
     """ Make a full dense grid of points in the given ranges """
-    
+
     x_min = np.asarray(x_min).reshape(-1)
     x_max = np.asarray(x_max).reshape(-1)
 
@@ -55,8 +55,8 @@ def _make_x_grid(*, n: int, x_min: list[float], x_max: list[float]) -> np.ndarra
     # list of 1-dim grids with n points, one for each axis
     x_grid_axis = [np.linspace(lo, hi, n) for lo, hi in zip(x_min, x_max)]
 
-    # list if d-dim grids with n**d points each 
-    x_grid = np.meshgrid(x_grid_axis)
+    # list if d-dim grids with n**d points each
+    x_grid = np.meshgrid(*x_grid_axis)
 
     # flatten into list of n**d column vectors
     x_grid = [x_grid_i.reshape(-1, 1) for x_grid_i in x_grid]
