@@ -10,16 +10,12 @@ from boplay.plotting.plot_gp_1d import plot_bo_history_1d
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 
-
+# load datassets
 benchmark = Benchmark.load(DATA_DIR / "1d_dataset.json")
-
 x_grid = benchmark.x
-
 kernel = lambda x1, x2: KERNELS[benchmark.kernel](x1, x2, **benchmark.kernel_params)
-
-
-
 y_true = benchmark.y[1, :]
+
 bo = BayesianOptimization(
     x_grid=x_grid,
     y_true=y_true,
