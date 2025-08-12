@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from boplay.gp import GaussianProcess
 
@@ -67,17 +68,21 @@ class BayesianOptimization:
             y_train=self.y_train,
             kernel=self.kernel,
         )
+        start_time = time.time()
         self.y_mean, self.y_cov = self.model.predict(x_test=self.x_grid)
+        self.predict_time = time.time() - start_time
         self.y_best = np.max(self.y_train)
 
     def _select_next_point(self) -> int:
         # compute mean, cov, acq fun and save as attributes
+        start_time = time.time()
         self.acq_fun_vals = self.acq_fun(
             x_grid=self.x_grid,
             y_mean=self.y_mean.reshape(-1),
             y_cov=self.y_cov,
             y_best=self.y_best,
         )
+        self.acq_fun_time = time.time() - start_time
 
         # set the acq fun vals for the points we have already evaluated to -inf
         acq_fun_vals_masked = self.acq_fun_vals.copy()
@@ -100,6 +105,8 @@ class BayesianOptimization:
                 "y_mean": self.y_mean,
                 "y_sd": np.sqrt(np.diag(self.y_cov)),
                 "acq_fun_vals": self.acq_fun_vals,
+                "acq_fun_time": self.acq_fun_time,
+                "predict_time": self.predict_time,
             }
         )
 
@@ -131,7 +138,15 @@ class BayesianOptimization:
 
             n, y_max = len(self.y_train), np.max(self.y_train)
             y_max_diff = self.y_true_max - y_max
-            # print(f"Iteration {n},  y_max: {y_max},  y_max_diff: {y_max_diff}")
-
             self.y_max_history.append([len(self.y_train), y_max])
 
+            acq_fun_time = round(1e3 * self.acq_fun_time, 5)
+            predict_time = round(1e3 * self.predict_time, 5)
+
+            print((
+                f"Iteration {n}, "
+                f"y_max: {y_max}, "
+                f"y_max_diff: {y_max_diff}, "
+                f"acq_fun_time: {acq_fun_time} ms, "
+                f"predict_time: {predict_time} ms, "
+            )[:-2])
