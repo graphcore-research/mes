@@ -111,10 +111,9 @@ def sample_yn1_ymax(
 
         y_n1_output.append(y_n1_b)
         y_funcs_output.append(y_funcs_b)
-        y_max_output.append(y_funcs_b.max(axis=3))
 
     y_n1_output = np.concatenate(y_n1_output, axis=0)
     y_funcs_output = np.concatenate(y_funcs_output, axis=0)
-    y_max_output = np.concatenate(y_max_output, axis=0)
+    y_max_output = y_funcs_output.max(axis=3)
 
     return y_n1_output, y_funcs_output, y_max_output, y_funcs

@@ -43,7 +43,7 @@ def plot_gp_and_acq_fun(
 
     # Line 2/2: plot the acquisition function and its peak
     acq_fun_vals = acq_fun_vals - np.min(acq_fun_vals)
-    acq_fun_vals = acq_fun_vals / np.max(acq_fun_vals)
+    acq_fun_vals = acq_fun_vals / (np.max(acq_fun_vals) + 1e-8)
     acq_fun_vals = acq_fun_vals + y_min
 
     ax.plot(x_grid, acq_fun_vals, label='Acquisition function', color='r')

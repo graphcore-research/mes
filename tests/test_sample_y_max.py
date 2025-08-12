@@ -10,6 +10,7 @@ def test_sampling_y_max():
     # make some fake data
     x_train = np.linspace(0, 100, 6).reshape(-1, 1)
     y_train = np.sin(2 * np.pi * x_train / 100).reshape(-1, 1)
+    y_best = float(max(y_train))
 
     # Define a GP model with an SE kernel
     kernel = lambda x1, x2: KERNELS["se"](x1, x2, len_scale=10.0, sigma_f=1.0)
@@ -17,12 +18,13 @@ def test_sampling_y_max():
     
     # get the mean and cov of predictions
     n_x_test = 101
-    x_test = np.linspace(0, 1, n_x_test).reshape(-1, 1)
+    x_test = np.linspace(0, 100, n_x_test).reshape(-1, 1)
     y_mean, y_cov = model.predict(x_test=x_test)
 
     # sample y_n1 and y_max values
     n_yn1 = 10
     n_ymax = 30
+    np.random.seed(0)
     y_n1_samples, y_funcs_samples, y_max_samples, _ = sample_yn1_ymax(
         y_mean=y_mean,
         y_cov=y_cov,
@@ -39,8 +41,14 @@ def test_sampling_y_max():
     # ensure each sampled function passes through the correct y_n1 at x_idx
     for x_idx in range(n_x_test):
         for j in range(n_yn1):
-            y_n1_ij = y_n1_samples[x_idx, j]
-            y_funcs_ij = y_funcs_samples[x_idx, j, :, :]
+            y_n1_ij = y_n1_samples[x_idx, j]               # scalar
+            y_funcs_ij = y_funcs_samples[x_idx, j, :, :]   # (n_ymax, n_x_test)
+            y_max_samples_ij = y_max_samples[x_idx, j, :]  # (n_ymax, )
+
+            y_best_ij = max(y_n1_ij, y_best) - 1e-3
+
+            assert y_best_ij <= y_max_samples_ij.min()
 
             # make sure each sampled function passes through y_n1 at x_idx
             assert max(y_n1_ij - y_funcs_ij[:, x_idx]) < 1e-9
+
