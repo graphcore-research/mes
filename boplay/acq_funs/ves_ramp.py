@@ -151,6 +151,10 @@ def ves_exponential_ramp(
         mean: np.ndarray, shape (n_x,)
         cov: np.ndarray, shape (n_x, n_x)
         y_best: float, best observed value
+        n_yn1: int, number of y_n1 samples
+        n_ymax: int, number of y_max samples
+        batch_size: int, batch size for the optimizer
+        idx_train: np.ndarray, indices of the training points
 
     Returns:
         np.ndarray, shape (n_x,)

@@ -57,6 +57,7 @@ def sample_yn1_ymax(
         y_funcs_output: np.ndarray, shape (n_x, n_yn1, n_ymax, n_x)
         y_max_output: np.ndarray, shape (n_x, n_yn1, n_ymax)
     """
+    y_mean = y_mean.reshape(-1, 1)
     n_x = y_mean.shape[0]       # total number of x -locations
     bs = min(batch_size, n_x)   # batch size
 
@@ -116,4 +117,4 @@ def sample_yn1_ymax(
     y_funcs_output = np.concatenate(y_funcs_output, axis=0)
     y_max_output = np.concatenate(y_max_output, axis=0)
 
-    return y_n1_output, y_funcs_output, y_max_output
+    return y_n1_output, y_funcs_output, y_max_output, y_funcs

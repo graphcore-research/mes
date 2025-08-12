@@ -98,7 +98,7 @@ def ves_base(
 
     # Part 1/3: Sample y_n1 and y_max
     # NUMPY ARRAYS
-    y_n1_samples, _, y_max_samples = sample_yn1_ymax(
+    y_n1_samples, _, y_max_samples, _ = sample_yn1_ymax(
         y_mean=y_mean,
         y_cov=y_cov,
         n_yn1=n_yn1,

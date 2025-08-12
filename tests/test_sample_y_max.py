@@ -23,7 +23,7 @@ def test_sampling_y_max():
     # sample y_n1 and y_max values
     n_yn1 = 10
     n_ymax = 30
-    y_n1_samples, y_funcs_samples, y_max_samples = sample_yn1_ymax(
+    y_n1_samples, y_funcs_samples, y_max_samples, _ = sample_yn1_ymax(
         y_mean=y_mean,
         y_cov=y_cov,
         n_yn1=n_yn1,
