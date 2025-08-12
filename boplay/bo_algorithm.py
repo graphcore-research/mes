@@ -34,6 +34,7 @@ class BayesianOptimization:
         n_init:int=4,
         n_final:int=100,
         seed:int=0,
+        verbose:bool=False,
     ) -> None:
         # benchmark ground truth data, x_grid is known to the algorithm,
         # y_true is not known to the algorithm and is collected one value
@@ -49,6 +50,7 @@ class BayesianOptimization:
         self.n_final = n_final
         self.seed = seed
         np.random.seed(self.seed)
+        self.verbose = verbose
 
         # algorithm state (mutable)
         self.x_train = None
@@ -81,6 +83,7 @@ class BayesianOptimization:
             y_mean=self.y_mean.reshape(-1),
             y_cov=self.y_cov,
             y_best=self.y_best,
+            idx_train=self.idx_train,
         )
         self.acq_fun_time = time.time() - start_time
 
@@ -143,10 +146,11 @@ class BayesianOptimization:
             acq_fun_time = round(1e3 * self.acq_fun_time, 5)
             predict_time = round(1e3 * self.predict_time, 5)
 
-            print((
-                f"Iteration {n}, "
-                f"y_max: {y_max}, "
-                f"y_max_diff: {y_max_diff}, "
-                f"acq_fun_time: {acq_fun_time} ms, "
-                f"predict_time: {predict_time} ms, "
-            )[:-2])
+            if self.verbose:
+                print((
+                    f"Iteration {n}, "
+                    f"y_max: {y_max}, "
+                    f"y_max_diff: {y_max_diff}, "
+                    f"acq_fun_time: {acq_fun_time} ms, "
+                    f"predict_time: {predict_time} ms, "
+                )[:-2])

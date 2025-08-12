@@ -14,7 +14,7 @@ def sample_yn1_ymax(
     y_cov: np.ndarray,
     n_yn1: int=10,
     n_ymax: int=30,
-    batch_size: int=10,
+    batch_size: int=1e9,
     noise: float=1e-9,
 ) -> np.ndarray:
     """
@@ -111,9 +111,6 @@ def sample_yn1_ymax(
         y_n1_output.append(y_n1_b)
         y_funcs_output.append(y_funcs_b)
         y_max_output.append(y_funcs_b.max(axis=3))
-
-        n_x_complete = sum([x.shape[0] for x in y_funcs_output])
-        print(f"Sampling funs: {n_x_complete} / {n_x}")
 
     y_n1_output = np.concatenate(y_n1_output, axis=0)
     y_funcs_output = np.concatenate(y_funcs_output, axis=0)
