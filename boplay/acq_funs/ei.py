@@ -8,6 +8,7 @@ def expected_improvement(
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     y_best: float,
+    idx_train: np.ndarray,
 ) -> np.ndarray:
     """
     Expected improvement acquisition function.

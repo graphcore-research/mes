@@ -7,6 +7,7 @@ def random_search(
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     y_best: float,
+    idx_train: np.ndarray,
 ) -> np.ndarray:
     """
     Random search acquisition function.
