@@ -7,3 +7,5 @@
 *.gif
 
 *.json
+
+visualize/figures/*
