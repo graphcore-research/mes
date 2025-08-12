@@ -18,8 +18,6 @@ Then an optimizer can be used to find the y_n1 -> ymax parameter mapping that ma
 the log likelihood of all y-max values.
 """
 
-
-
 from typing import Callable
 import numpy as np
 import torch as pt
@@ -27,7 +25,6 @@ import torch as pt
 from boplay.acq_funs.mes_utils import sample_yn1_ymax
 
 PT_DTYPE = pt.float64
-PT_DEVICE = "cpu"
 PT_DEVICE = pt.device("cuda" if pt.cuda.is_available() else "cpu")
 
 

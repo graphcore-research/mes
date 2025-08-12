@@ -17,7 +17,7 @@ def random_search(
         mean: np.ndarray, shape (n_x,)
         cov: np.ndarray, shape (n_x, n_x)
         y_best: float, best observed value
-
+        idx_train: np.ndarray, indices of the training points
     Returns:
         np.ndarray, shape (n_x,)
     """

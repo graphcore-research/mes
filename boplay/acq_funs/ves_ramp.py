@@ -8,7 +8,6 @@ For any VES implementation we only need three functions:
 
 """
 
-
 import numpy as np
 import torch as pt
 
