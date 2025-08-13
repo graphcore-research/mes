@@ -1,6 +1,6 @@
 import numpy as np
 
-from boplay.acq_funs.mes_utils import sample_yn1_ymax
+from boplay.acq_funs.mes_utils import sample_yn1_ymax, reconstruct_full_vector
 
 
 def ves_mc_exponential(
@@ -32,6 +32,11 @@ def ves_mc_exponential(
     Returns:
         np.ndarray, shape (n_x,)
     """
+    idx_test = np.setdiff1d(np.arange(y_mean.shape[0]), idx_train)
+
+    y_mean = y_mean[idx_test, :]
+    y_cov = y_cov[idx_test, :][:, idx_test]
+
     y_n1_samples, _, y_max_samples, _ = sample_yn1_ymax(
         y_mean=y_mean,
         y_cov=y_cov,
@@ -40,7 +45,7 @@ def ves_mc_exponential(
         batch_size=batch_size,
     )
 
-    n_x = x_grid.shape[0]
+    n_x = len(idx_test)
 
     # (n_x, n_yn1)
     y_best_n1 = np.clip(y_n1_samples, min=y_best)
@@ -69,7 +74,16 @@ def ves_mc_exponential(
     # (n_x,)
     log_likelihood = log_likelihood.sum(axis=1)
 
-    return log_likelihood
+    acq_fun_vals = log_likelihood
+
+    acq_fun_vals = reconstruct_full_vector(
+        acq_fun_vals_idx_test=acq_fun_vals,
+        idx_test=idx_test,
+        n_x=x_grid.shape[0],
+    )
+
+    return acq_fun_vals
+
 
 
 

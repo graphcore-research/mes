@@ -65,10 +65,13 @@ class TestAcqFuns(unittest.TestCase):
         """
         Construct a test function for each acquisition function.
         """
-        for acq_fun_name, acq_fun in ACQ_FUNCS.items():
-            test_name = f"test_{acq_fun_name}"
-            test_fun = lambda self: cls._validate_acq_funs(self, acq_fun_name=acq_fun_name, acq_fun=acq_fun)
-            setattr(cls, test_name, test_fun)
+        def make_test(name, fun):
+            def test(self):
+                self._validate_acq_funs(acq_fun_name=name, acq_fun=fun)
+            return test
+
+        for name, fun in ACQ_FUNCS.items():
+            setattr(cls, f"test_{name}", make_test(name, fun))
 
 
 TestAcqFuns.build_acq_fun_tests()

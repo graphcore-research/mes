@@ -6,7 +6,7 @@ def estimate_gamma_params(
     *,
     x: np.ndarray,
     max_iters: int=10,
-    k_min: float=0.1,
+    k_min: float=0.01,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Estimate the parameters of a Gamma distribution.
@@ -50,7 +50,7 @@ def gamma_log_likelihood(
         theta: np.ndarray, shape (n_rows, )
 
     Returns:
-        np.ndarray, shape (n_rows, )
+        np.ndarray, shape (n_rows, ncols)
     """
 
     assert x.ndim == 2, "x must be a 2D array [B, N]"
@@ -61,4 +61,4 @@ def gamma_log_likelihood(
     theta = theta[:, None]
 
     log_likelihood = (k - 1.0) * np.log(x) - x / theta - k * np.log(theta) - gammaln(k)
-    return log_likelihood.sum(axis=1)
+    return log_likelihood
