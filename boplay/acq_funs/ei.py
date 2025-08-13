@@ -23,6 +23,8 @@ def expected_improvement(
     Returns:
         np.ndarray, shape (n_x,)
     """
+    y_mean = y_mean.reshape(-1)
+
     sdev = np.sqrt(np.diag(y_cov))
     z = (y_mean - y_best) / sdev
     ei_vals = (y_mean - y_best) * norm.cdf(z) + sdev * norm.pdf(z)

@@ -1,6 +1,6 @@
 import numpy as np
 
-from boplay.acq_funs.mes_utils import sample_yn1_ymax
+from boplay.acq_funs.mes_utils import sample_yn1_ymax, reconstruct_full_vector
 from boplay.acq_funs.gamma_distribution import estimate_gamma_params, gamma_log_likelihood
 
 
@@ -33,6 +33,12 @@ def ves_mc_gamma(
     Returns:
         np.ndarray, shape (n_x,)
     """
+    idx_test = np.setdiff1d(np.arange(y_mean.shape[0]), idx_train)
+
+    # only compute acquisition funciotn values for the unused points
+    y_mean = y_mean[idx_test]
+    y_cov = y_cov[idx_test, :][:, idx_test]
+
     y_n1_samples, _, y_max_samples, _ = sample_yn1_ymax(
         y_mean=y_mean,
         y_cov=y_cov,
@@ -41,7 +47,7 @@ def ves_mc_gamma(
         batch_size=batch_size,
     )
 
-    n_x = x_grid.shape[0]
+    n_x = len(idx_test)
 
     # (n_x, n_yn1)
     y_best_n1 = np.clip(y_n1_samples, min=y_best)
@@ -58,14 +64,20 @@ def ves_mc_gamma(
     # (n_x * n_yn1, ), (n_x * n_yn1, )
     k, theta = estimate_gamma_params(x=y_max_shifted, max_iters=0, k_min=0.1)
 
-    # (n_x * n_yn1, )
+    # (n_x * n_yn1, n_ymax): compute likelihood for each data y_max
     log_likelihood = gamma_log_likelihood(x=y_max_shifted, k=k, theta=theta)
 
-    # (n_x, n_yn1)
-    log_likelihood = log_likelihood.reshape(n_x, n_yn1)
+    # (n_x, n_yn1 * n_ymax)
+    log_likelihood = log_likelihood.reshape(n_x, n_yn1 * n_ymax)
 
-    # (n_x,)
-    acq_fun_vals = log_likelihood.sum(axis=1)
+    # (n_x,): mean over all (y_n1, y_max) samples within each of the n_x locations.
+    acq_fun_vals = log_likelihood.mean(axis=1)
+
+    acq_fun_vals = reconstruct_full_vector(
+        acq_fun_vals_idx_test=acq_fun_vals,
+        idx_test=idx_test,
+        n_x=x_grid.shape[0],
+    )
 
     return acq_fun_vals
 

@@ -8,6 +8,34 @@ def gaussian_bin_centers(n:int, mu:float=0.0, sigma:float=1.0) -> list[float]:
     return norm.ppf(ps, loc=mu, scale=sigma)
 
 
+def reconstruct_full_vector(
+    *,
+    acq_fun_vals_idx_test: np.ndarray,
+    idx_test: np.ndarray,
+    n_x: int
+) -> np.ndarray:
+    """
+    Given the acq_fun values at a set of test points, reconstruct the full
+    vector of acq_fun values filling in the gaps with the minimum value.
+
+    Args:
+        acq_fun_vals: np.ndarray, shape (n_x, )
+        idx_test: np.ndarray, shape (n_x, )
+        n_x: int
+    
+    Returns:
+        af_vals: np.ndarray, shape (n_x, )
+    """
+    af_min = acq_fun_vals_idx_test.min()
+    af_max = acq_fun_vals_idx_test.max()
+    af_lo = af_min - 0.01 * (af_max - af_min)
+
+    af_vals = af_lo * np.ones(n_x)
+    af_vals[idx_test] = acq_fun_vals_idx_test
+
+    return af_vals
+
+
 def sample_yn1_ymax(
     *,
     y_mean: np.ndarray,
