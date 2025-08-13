@@ -21,9 +21,9 @@ len_scales = [1, 5, 10, 25, 50, 100]
 n_dims = [1, 2, 4, 8]
 
 # n_x increases with dimensionality. E.g. in 2D n_x = 200 => 200**2 points.
-n_total_samples = 256
-n_y = 100  # Run quick
-n_init, n_final = 4, 50
+n_total_samples = 100
+n_y = 15  # Run quick
+n_init, n_final = 4, 25
 
 
 def _make_benchmark_from_hps(kernel, len_scale, n_dim):
@@ -115,7 +115,14 @@ if __name__ == "__main__":
             pool.imap_unordered(_process_hyperparams, param_combinations),
             total=n_sweeps,
         )
-        results = list(chain.from_iterable(futures)) # flatten & evaluate
+        results = list(chain.from_iterable(futures))  # flatten & evaluate
+
+    # Run no multiprocessing
+    # futures = tqdm(
+    #     map(_process_hyperparams, param_combinations),
+    #     total=n_sweeps,
+    # )
+    # results = list(chain.from_iterable(futures))  # flatten & evaluate
 
     results_df = pd.DataFrame(results)
     results_df.to_json(DATA_DIR / "benchmark_df.json")
