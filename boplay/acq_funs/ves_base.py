@@ -24,7 +24,7 @@ import torch as pt
 
 from boplay.acq_funs.mes_utils import sample_yn1_ymax
 
-PT_DTYPE = pt.float64
+PT_DTYPE = pt.float32
 PT_DEVICE = pt.device("cuda" if pt.cuda.is_available() else "cpu")
 
 
@@ -51,12 +51,19 @@ def optimize_adam(
         final_loss: float, the optimized loss
     """
     opt = pt.optim.Adam([theta], lr=lr, amsgrad=True)
+    prev_loss = float("inf")
+    L = None
 
     for _ in range(max_iters):
         opt.zero_grad(set_to_none=True)
         L = loss_fn(theta)
         L.backward()
         opt.step()
+
+        # Early stopping
+        if abs(prev_loss - L.item()) < tol:
+            break
+        prev_loss = L.item()
 
     return theta.detach(), L.item()
 
@@ -154,7 +161,7 @@ def ves_base(
             import pdb; pdb.set_trace()
             print(loss)
         return loss
-    
+
     # optimize the parameters
     # params_optimal, _ = optimize_lbfgs(theta=params_initial,loss_fn=loss_fn)
     params_optimal, _ = optimize_adam(theta=params_initial, loss_fn=loss_fn)
