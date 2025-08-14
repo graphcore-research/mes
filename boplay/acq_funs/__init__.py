@@ -14,4 +14,5 @@ ACQ_FUNCS = {
     "ves_mc_exponential": ves_mc_exponential,
     "ves_mc_gamma": ves_mc_gamma,
     "ves_gamma": ves_gamma,
+    "ves_1d_regression_lr": ves_1d_regression_lr,
 }
