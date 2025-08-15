@@ -29,7 +29,7 @@ def estimate_gamma_params(
     k = (x_mean**2 / x_var).clip(min=k_min)
     s = np.log(x_mean) - np.log(x).mean(axis=1)
     for _ in range(max_iters):
-        k -= (np.log(k) - digamma(k) - s) / (1.0 / k - polygamma(1, k))
+        k -= (np.log(k) - digamma(k) - s) / (1.0 / k - polygamma(1, k) + 1e-8)
         k = k.clip(min=k_min)
     theta = x_mean / k
     return k, theta

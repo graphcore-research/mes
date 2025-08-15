@@ -80,7 +80,7 @@ class BayesianOptimization:
         start_time = time.time()
         self.acq_fun_vals = self.acq_fun(
             x_grid=self.x_grid,
-            y_mean=self.y_mean.reshape(-1),
+            y_mean=self.y_mean,
             y_cov=self.y_cov,
             y_best=self.y_best,
             idx_train=self.idx_train,
