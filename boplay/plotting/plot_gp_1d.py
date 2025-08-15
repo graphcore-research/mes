@@ -2,9 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-from tempfile import TemporaryDirectory
-
 from boplay.plotting.animate import animate_files
+
+
+ROOT = Path(__file__).parent.parent.parent
 
 
 def plot_gp_and_acq_fun(
@@ -43,7 +44,7 @@ def plot_gp_and_acq_fun(
 
     # Line 2/2: plot the acquisition function and its peak
     acq_fun_vals = acq_fun_vals - np.min(acq_fun_vals)
-    acq_fun_vals = acq_fun_vals / np.max(acq_fun_vals)
+    acq_fun_vals = acq_fun_vals / (np.max(acq_fun_vals) + 1e-8)
     acq_fun_vals = acq_fun_vals + y_min
 
     ax.plot(x_grid, acq_fun_vals, label='Acquisition function', color='r')
@@ -63,36 +64,36 @@ def plot_bo_history_1d(
     y_true: np.ndarray,
     state_history: list[dict],
     animation_gif: Path,
+    tmp_dir: Path = None,
 ) -> None:
 
-    with TemporaryDirectory() as tmp_dir:
-        tmp_dir = f"{Path(__file__).parent.parent.parent}/frames/bo_frames"
-        tmp_dir = Path(tmp_dir)
-        for file in tmp_dir.glob("*.png"):
-            file.unlink()
-
+    if tmp_dir is None:
+        tmp_dir = ROOT / "pics" / f"{animation_gif.stem}_frames"
         tmp_dir.mkdir(parents=True, exist_ok=True)
 
-        for state in state_history:
-            fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-            n_train = state["n_train"]
-            y_mean = state["y_mean"].reshape(-1)
-            y_sd = state["y_sd"].reshape(-1)
-            acq_fun_vals = state["acq_fun_vals"].reshape(-1)
-            x_train_n = x_train[:n_train]
-            y_train_n = y_train[:n_train]
+    for file in tmp_dir.glob("*.png"):
+        file.unlink()
 
-            plot_gp_and_acq_fun(
-                x_train=x_train_n,
-                y_train=y_train_n,
-                y_true=y_true,
-                x_grid=x_grid,
-                y_mean=y_mean,
-                y_sd=y_sd,
-                acq_fun_vals=acq_fun_vals,
-                ax=ax
-            )
-            fig.savefig(tmp_dir / f"bo_state_{n_train:03d}.png")
-            plt.close(fig)
+    for state in state_history:
+        fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+        n_train = state["n_train"]
+        y_mean = state["y_mean"].reshape(-1)
+        y_sd = state["y_sd"].reshape(-1)
+        acq_fun_vals = state["acq_fun_vals"].reshape(-1)
+        x_train_n = x_train[:n_train]
+        y_train_n = y_train[:n_train]
 
-        animate_files(tmp_dir, animation_gif)
+        plot_gp_and_acq_fun(
+            x_train=x_train_n,
+            y_train=y_train_n,
+            y_true=y_true,
+            x_grid=x_grid,
+            y_mean=y_mean,
+            y_sd=y_sd,
+            acq_fun_vals=acq_fun_vals,
+            ax=ax
+        )
+        fig.savefig(tmp_dir / f"bo_state_{n_train:03d}.png")
+        plt.close(fig)
+
+    animate_files(tmp_dir, animation_gif)

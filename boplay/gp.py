@@ -17,7 +17,7 @@ class GaussianProcess:
         x_train: np.ndarray,
         y_train: np.ndarray,
         kernel: callable,
-        noise: float = 1e-6,
+        noise: float = 1e-9,
     ) -> None:
         """Initializes the GP with training data and a kernel.
 

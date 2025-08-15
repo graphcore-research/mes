@@ -5,7 +5,9 @@
 *.egg-info
 
 *.gif
+*.csv
 
 *.json
 
 visualize/figures/*
+pics/

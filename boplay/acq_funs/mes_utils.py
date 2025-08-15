@@ -8,13 +8,41 @@ def gaussian_bin_centers(n:int, mu:float=0.0, sigma:float=1.0) -> list[float]:
     return norm.ppf(ps, loc=mu, scale=sigma)
 
 
+def reconstruct_full_vector(
+    *,
+    acq_fun_vals_idx_test: np.ndarray,
+    idx_test: np.ndarray,
+    n_x: int
+) -> np.ndarray:
+    """
+    Given the acq_fun values at a set of test points, reconstruct the full
+    vector of acq_fun values filling in the gaps with the minimum value.
+
+    Args:
+        acq_fun_vals: np.ndarray, shape (n_x, )
+        idx_test: np.ndarray, shape (n_x, )
+        n_x: int
+    
+    Returns:
+        af_vals: np.ndarray, shape (n_x, )
+    """
+    af_min = acq_fun_vals_idx_test.min()
+    af_max = acq_fun_vals_idx_test.max()
+    af_lo = af_min - 0.01 * (af_max - af_min)
+
+    af_vals = af_lo * np.ones(n_x)
+    af_vals[idx_test] = acq_fun_vals_idx_test
+
+    return af_vals
+
+
 def sample_yn1_ymax(
     *,
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     n_yn1: int=10,
     n_ymax: int=30,
-    batch_size: int=10,
+    batch_size: int=1e9,
     noise: float=1e-9,
 ) -> np.ndarray:
     """
@@ -57,6 +85,7 @@ def sample_yn1_ymax(
         y_funcs_output: np.ndarray, shape (n_x, n_yn1, n_ymax, n_x)
         y_max_output: np.ndarray, shape (n_x, n_yn1, n_ymax)
     """
+    y_mean = y_mean.reshape(-1, 1)
     n_x = y_mean.shape[0]       # total number of x -locations
     bs = min(batch_size, n_x)   # batch size
 
@@ -110,13 +139,9 @@ def sample_yn1_ymax(
 
         y_n1_output.append(y_n1_b)
         y_funcs_output.append(y_funcs_b)
-        y_max_output.append(y_funcs_b.max(axis=3))
-
-        n_x_complete = sum([x.shape[0] for x in y_funcs_output])
-        print(f"Sampling funs: {n_x_complete} / {n_x}")
 
     y_n1_output = np.concatenate(y_n1_output, axis=0)
     y_funcs_output = np.concatenate(y_funcs_output, axis=0)
-    y_max_output = np.concatenate(y_max_output, axis=0)
+    y_max_output = y_funcs_output.max(axis=3)
 
-    return y_n1_output, y_funcs_output, y_max_output
+    return y_n1_output, y_funcs_output, y_max_output, y_funcs

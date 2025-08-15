@@ -46,12 +46,15 @@ def _optimal_kde_bandwidth(data: np.ndarray) -> tuple[float, float]:
     return best_bandwidth, best_score
 
 
-def fit_kde(x_train: np.ndarray) -> KernelDensity:
+def fit_kde(x_train: np.ndarray, bw: float | None = None) -> KernelDensity:
     """
     Fit a KDE to the data and return the KDE object with the entropy computed
     """
     x_train = np.asarray(x_train).reshape(-1, 1)
-    best_bw, _ = _optimal_kde_bandwidth(x_train)
+    if bw is None:
+        best_bw, _ = _optimal_kde_bandwidth(x_train)
+    else:
+        best_bw = bw
     kde = KernelDensity(kernel='gaussian', bandwidth=best_bw)
     kde.fit(x_train)
     kde.density = lambda x: np.exp(kde.score_samples(x.reshape(-1, 1)))

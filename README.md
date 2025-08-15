@@ -9,6 +9,10 @@ Collections of toy expertiments for approximating Max Value entropy Search
 
 # Setup
 ```
+# install pytorch first
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+# install the other dependencies
 pip install -e .
 ```
 

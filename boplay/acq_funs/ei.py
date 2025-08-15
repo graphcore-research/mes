@@ -8,6 +8,7 @@ def expected_improvement(
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     y_best: float,
+    idx_train: np.ndarray,
 ) -> np.ndarray:
     """
     Expected improvement acquisition function.
@@ -17,10 +18,13 @@ def expected_improvement(
         mean: np.ndarray, shape (n_x,)
         cov: np.ndarray, shape (n_x, n_x)
         y_best: float, best observed value
+        idx_train: np.ndarray, indices of the training points
 
     Returns:
         np.ndarray, shape (n_x,)
     """
+    y_mean = y_mean.reshape(-1)
+
     sdev = np.sqrt(np.diag(y_cov))
     z = (y_mean - y_best) / sdev
     ei_vals = (y_mean - y_best) * norm.cdf(z) + sdev * norm.pdf(z)
