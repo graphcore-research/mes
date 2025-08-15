@@ -31,7 +31,7 @@ def ves_gamma(
         n_ymax: int, number of y_max samples
         batch_size: int, batch size for the optimizer
         idx_train: np.ndarray, indices of the training points
-    
+
     Returns:
         np.ndarray, shape (n_x,)
     """
@@ -61,7 +61,7 @@ def ves_gamma(
     y_max_shifted = np.clip(y_max_shifted, min=1e-10)
 
     # (n_x * n_yn1, n_ymax) flatten so each row is samples from one distribution
-    y_max_shifted = y_max_shifted.reshape(n_x, n_yn1 * n_ymax)
+    y_max_shifted = y_max_shifted.reshape(n_x * n_yn1, n_ymax)
 
     # (n_x, n_yn1*n_ymax), (n_x, n_yn1*n_ymax)
     k, theta = estimate_gamma_params(x=y_max_shifted)
@@ -93,7 +93,7 @@ def ves_gamma(
     log_likelihood = gamma_log_likelihood(x=y_max_shifted, k=k, theta=theta)
 
     # (n_x, )
-    log_likelihood = log_likelihood.mean(axis=1)
+    log_likelihood = log_likelihood.reshape(n_x, n_yn1 * n_ymax).mean(axis=1)
 
     # (n_x,)
     acq_fun_vals = log_likelihood
