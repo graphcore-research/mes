@@ -1,6 +1,8 @@
+from functools import partial
+
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from functools import partial
+from sklearn.metrics import mean_squared_error
 
 from boplay.acq_funs.ves_1d_regression_base import ves_1d_regression_base
 
@@ -29,10 +31,11 @@ def fit_lr_models(
         x = x_data[i, :, None]
         y = y_data[i, :, None]
 
-        # fit a linear regression model from scipy.stats
+        # fit a linear regression model from sklearn
         model = LinearRegression()
         model.fit(x, y)
-        mse[i] = model.score(x, y)
+        y_pred = model.predict(x)
+        mse[i] = - mean_squared_error(y, y_pred)
 
     return mse
 

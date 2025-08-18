@@ -15,6 +15,7 @@ def ves_1d_regression_base(
     batch_size: int=1e9,
     idx_train: np.ndarray,
     model_fit_fun: Callable,
+    expand_y_n1: bool=True,
 ) -> np.ndarray:
     """
     Variational Entropy Search acquisition function using any regression model
@@ -30,6 +31,7 @@ def ves_1d_regression_base(
         batch_size: int, batch size for the optimizer
         idx_train: np.ndarray, indices of the training points
         model_fit_fun: Callable, function to fit a 1D regression model and return fitness scores
+        expand_y_n1: bool, whether to expand the y_n1 values to match the y_max_samples
     
     Returns:
         np.ndarray, shape (n_x,)
@@ -50,22 +52,30 @@ def ves_1d_regression_base(
 
     n_x = len(idx_test)
 
-    # expand the y_n1 values to match the y_max_samples
-    # (n_x, n_yn1, n_ymax) <- (n_x, n_yn1, 1)
-    y_n1_samples = np.tile(y_n1_samples[:, :, None], (1, 1, n_ymax))
+    if expand_y_n1:
+        # expand the y_n1 values to match the y_max_samples
+        # (n_x, n_yn1, n_ymax) <- (n_x, n_yn1, 1)
+        y_n1_samples = np.tile(y_n1_samples[:, :, None], (1, 1, n_ymax))
 
-    # reshape the y_n1 and y^* values  so that each row is one
-    # dataset for 1D regression.
-    # (n_x, n_yn1 * n_ymax)
-    y_n1_samples = y_n1_samples.reshape(n_x, n_yn1 * n_ymax)
+        # reshape the y_n1 and y^* values  so that each row is one
+        # dataset for 1D regression.
+        # (n_x, n_yn1 * n_ymax)
+        y_n1_samples = y_n1_samples.reshape(n_x, n_yn1 * n_ymax)
 
-    # (n_x, n_yn1 * n_ymax)
-    y_max_samples = y_max_samples.reshape(n_x, n_yn1 * n_ymax)
+        # (n_x, n_yn1 * n_ymax)
+        y_max_samples = y_max_samples.reshape(n_x, n_yn1 * n_ymax)
 
     # fit a 1D regression model to each row and measure model fitness
     model_fitness_scores = model_fit_fun(
         x_data=y_n1_samples,
         y_data=y_max_samples,
+    )
+
+    model_fitness_scores = model_fitness_scores.reshape(-1)
+
+    assert model_fitness_scores.shape == (n_x,), (
+        f"model_fitness_scores.shape: {model_fitness_scores.shape}"
+        f"n_x: {n_x} mismatch"
     )
 
     acq_fun_vals = reconstruct_full_vector(
