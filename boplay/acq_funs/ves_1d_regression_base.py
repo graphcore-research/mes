@@ -67,10 +67,10 @@ def ves_1d_regression_base(
         # (n_x, n_yn1 * n_ymax)
         y_max_samples = y_max_samples.reshape(n_x, n_yn1 * n_ymax)
 
-    # fit a 1D regression model to each row and measure model fitness
     if model_fit_fun_kwargs is None:
         model_fit_fun_kwargs = {}
 
+    # fit a 1D regression model to each row and measure model fitness
     model_fitness_scores = model_fit_fun(
         x_data=y_n1_samples,
         y_data=y_max_samples,
