@@ -1,11 +1,6 @@
-from functools import partial
-
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-
-from boplay.acq_funs.ves_1d_regression_base import ves_1d_regression_base
-
 
 
 def fit_lr_models(
@@ -38,10 +33,3 @@ def fit_lr_models(
         mse[i] = - mean_squared_error(y, y_pred)
 
     return mse
-
-
-
-
-
-ves_1d_regression_lr = partial(ves_1d_regression_base, model_fit_fun=fit_lr_models)
-

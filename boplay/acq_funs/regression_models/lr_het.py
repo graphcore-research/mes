@@ -1,10 +1,5 @@
-from functools import partial
-
 import numpy as np
 import torch as pt
-
-from boplay.acq_funs.ves_1d_regression_base import ves_1d_regression_base
-
 
 
 def fit_lr_het_models(
@@ -94,6 +89,3 @@ def fit_lr_het_models(
         opt.step()
     
     return -Gaussian_log_likelihood(params).detach().cpu().numpy()
-
-
-ves_1d_regression_lr_het = partial(ves_1d_regression_base, model_fit_fun=fit_lr_het_models)
