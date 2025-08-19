@@ -9,7 +9,7 @@ from boplay.acq_funs import ACQ_FUNCS
 from boplay.kernels import KERNELS
 from boplay.bo_algorithm import BayesianOptimization
 from boplay.benchmark_data import make_benchmark_data, Benchmark
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -54,7 +54,7 @@ def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
     x_grid = benchmark.x
     n_test_funs, _ = benchmark.y.shape
     bos = []
-    for i in range(n_test_funs):
+    for i in trange(n_test_funs, leave=False):
         y_true = benchmark.y[i, :]
         acq_func = ACQ_FUNCS[acq_type]
         kernel = _make_kernel(benchmark)
