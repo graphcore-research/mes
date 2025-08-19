@@ -43,7 +43,7 @@ def initialize_exponential_ramp_params(
     # lower and upper thresholds for the y_n1 -> lambda functions.
     idx_lo = int(n_yn1 / 3)
     idx_hi = int(2 * n_yn1 / 3)
-    
+
     y_lo = y_n1_samples[:, idx_lo]
     y_hi = y_n1_samples[:, idx_hi]
 
@@ -141,6 +141,8 @@ def ves_exponential_ramp(
     n_ymax: int=30,
     batch_size: int=1e9,
     idx_train: np.ndarray,
+    lr: float = 1e-2,
+    wd: float = 0.,
 ) -> np.ndarray:
     """
     Variational Entropy search with the exponenital ramp to approximate how
@@ -170,4 +172,6 @@ def ves_exponential_ramp(
         compute_distro_params=compute_exponential_lambda_values,
         compute_log_likelihood=compute_exponential_log_likelihood,
         idx_train=idx_train,
+        lr=lr,
+        wd=wd,
     )

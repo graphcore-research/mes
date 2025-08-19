@@ -13,6 +13,8 @@ def ves_mc_exponential(
     n_ymax: int=30,
     batch_size: int=1e9,
     idx_train: np.ndarray,
+    lr: float = 1e-2,
+    wd: float = 0.0,
 ) -> np.ndarray:
     """
     Cheap Variational Entropy Search acquisition function.
@@ -28,7 +30,7 @@ def ves_mc_exponential(
         n_ymax: int, number of y_max samples
         batch_size: int, batch size for the optimizer
         idx_train: np.ndarray, indices of the training points
-    
+
     Returns:
         np.ndarray, shape (n_x,)
     """
