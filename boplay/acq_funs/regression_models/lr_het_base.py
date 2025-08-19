@@ -4,6 +4,12 @@ import torch as pt
 
 from boplay.acq_funs.ves_base import optimize_adam
 
+from boplay.acq_funs.pytorch_settings import PT_DTYPE, PT_DEVICE
+
+pt_params = {
+    "dtype": PT_DTYPE,
+    "device": PT_DEVICE,
+}
 
 half_log_pi_const = float(-0.5 * np.log(2 * np.pi))
 
@@ -73,9 +79,9 @@ def fit_lr_het_model(
     )
 
     # (n_x, n_points)
-    x_trend_pt = pt.tensor(x_trend, dtype=pt.float32)
-    x_noise_pt = pt.tensor(x_noise, dtype=pt.float32)
-    y_pt = pt.tensor(y_data, dtype=pt.float32)
+    x_trend_pt = pt.tensor(x_trend, **pt_params)
+    x_noise_pt = pt.tensor(x_noise, **pt_params)
+    y_pt = pt.tensor(y_data, **pt_params)
 
     y_mean_emp = y_pt.mean(axis=1)[:, None]
     y_log_std_emp = pt.log(y_pt.std(axis=1)[:, None])
@@ -85,9 +91,9 @@ def fit_lr_het_model(
         pt.concat(
         [
             y_mean_emp,
-            pt.zeros(n_x, 1),
+            pt.zeros(n_x, 1, **pt_params),
             y_log_std_emp,
-            pt.zeros(n_x, 1),
+            pt.zeros(n_x, 1, **pt_params),
         ],
         axis=1
         )

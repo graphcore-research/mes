@@ -24,8 +24,12 @@ import torch as pt
 
 from boplay.acq_funs.mes_utils import sample_yn1_ymax
 
-PT_DTYPE = pt.float32
-PT_DEVICE = pt.device("cuda" if pt.cuda.is_available() else "cpu")
+from boplay.acq_funs.pytorch_settings import PT_DTYPE, PT_DEVICE
+
+pt_params = {
+    "dtype": PT_DTYPE,
+    "device": PT_DEVICE,
+}
 
 
 def optimize_adam(
@@ -138,9 +142,9 @@ def ves_base(
     y_max_shifted = y_max_shifted[idx_test]
 
     # TORCH TENSORS FROM HERE ONWARDS
-    params_initial = pt.nn.Parameter(pt.tensor(params_initial, dtype=PT_DTYPE).to(PT_DEVICE))
-    y_n1_samples = pt.tensor(y_n1_samples, dtype=PT_DTYPE).to(PT_DEVICE)
-    y_max_shifted = pt.tensor(y_max_shifted, dtype=PT_DTYPE).to(PT_DEVICE)
+    params_initial = pt.nn.Parameter(pt.tensor(params_initial, **pt_params))
+    y_n1_samples = pt.tensor(y_n1_samples, **pt_params)
+    y_max_shifted = pt.tensor(y_max_shifted, **pt_params)
 
     # get the optimal parameters
     def loss_fn(params: pt.Tensor) -> float:

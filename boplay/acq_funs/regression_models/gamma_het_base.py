@@ -4,6 +4,13 @@ import torch as pt
 
 from boplay.acq_funs.ves_base import optimize_adam
 
+from boplay.acq_funs.pytorch_settings import PT_DTYPE, PT_DEVICE
+
+pt_params = {
+    "dtype": PT_DTYPE,
+    "device": PT_DEVICE,
+}
+
 
 def gamma_log_likelihood(*, x: pt.Tensor, k: pt.Tensor, theta: pt.Tensor) -> pt.Tensor:
     """
@@ -71,10 +78,10 @@ def fit_gamma_het_model(
     )
 
     # (n_x, n_points)
-    x_trend_pt = pt.tensor(x_trend, dtype=pt.float32)
-    k_basis_pt = pt.tensor(k_basis, dtype=pt.float32)
-    beta_basis_pt = pt.tensor(beta_basis, dtype=pt.float32)
-    y_pt = pt.tensor(y_data, dtype=pt.float32)
+    x_trend_pt = pt.tensor(x_trend, **pt_params)
+    k_basis_pt = pt.tensor(k_basis, **pt_params)
+    beta_basis_pt = pt.tensor(beta_basis, **pt_params)
+    y_pt = pt.tensor(y_data, **pt_params)
 
     noise_vals = y_pt - x_trend_pt
 
@@ -89,10 +96,10 @@ def fit_gamma_het_model(
     params = pt.nn.Parameter(
         pt.concat(
             [
-                pt.ones(n_x, 1),
-                pt.zeros(n_x, 1),
+                pt.ones(n_x, 1, **pt_params),
+                pt.zeros(n_x, 1, **pt_params),
                 noise_mean_emp,
-                pt.zeros(n_x, 1),
+                pt.zeros(n_x, 1, **pt_params),
             ],
             axis=1
         )
