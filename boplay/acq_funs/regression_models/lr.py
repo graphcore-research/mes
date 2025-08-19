@@ -7,6 +7,7 @@ def fit_lr_sklearn(
     *,
     x_data: np.ndarray,
     y_data: np.ndarray,
+    **kwargs,
 ) -> np.ndarray:
     """
     Fit a linear regression model to each row of the data and return the MSE.
