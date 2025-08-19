@@ -1,4 +1,4 @@
-from boplay.acq_funs.regression_models.lr import fit_lr_sklearn
+from boplay.acq_funs.regression_models.lr_sklearn import fit_lr_sklearn
 from boplay.acq_funs.regression_models.lr_models import (
     fit_lr_1_0,
     fit_lr_1_1,

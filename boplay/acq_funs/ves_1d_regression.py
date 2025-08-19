@@ -1,5 +1,5 @@
 """
-Variational Entropy Search acquisition functions for 1D regression.
+Variational Entropy Search acquisition functions that use 1D regression.
 
 This file imports all of the regression models and makes them into
 acquisition functions.
