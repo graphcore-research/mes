@@ -13,8 +13,7 @@ def ves_mc_exponential(
     n_ymax: int=30,
     batch_size: int=1e9,
     idx_train: np.ndarray,
-    lr: float = 1e-2,
-    wd: float = 0.0,
+    **unused,
 ) -> np.ndarray:
     """
     Cheap Variational Entropy Search acquisition function.
