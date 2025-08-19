@@ -11,4 +11,7 @@ from boplay.acq_funs.regression_models.gamma_models import (
     fit_gamma_0_0,
     fit_gamma_0_1,
     fit_gamma_0_2,
+    fit_exp_0,
+    fit_exp_1,
+    fit_exp_2,
 )

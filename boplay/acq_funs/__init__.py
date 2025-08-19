@@ -15,6 +15,9 @@ from .ves_1d_regression import (
     ves_gamma_0_0,
     ves_gamma_0_1,
     ves_gamma_0_2,
+    ves_exp_0,
+    ves_exp_1,
+    ves_exp_2,
 )
 
 
@@ -36,4 +39,7 @@ ACQ_FUNCS = {
     "ves_gamma_0_0": ves_gamma_0_0,
     "ves_gamma_0_1": ves_gamma_0_1,
     "ves_gamma_0_2": ves_gamma_0_2,
+    "ves_exp_0": ves_exp_0,
+    "ves_exp_1": ves_exp_1,
+    "ves_exp_2": ves_exp_2,
 }

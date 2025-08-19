@@ -20,6 +20,9 @@ from boplay.acq_funs.regression_models import (
     fit_gamma_0_0,
     fit_gamma_0_1,
     fit_gamma_0_2,
+    fit_exp_0,
+    fit_exp_1,
+    fit_exp_2,
 )
 from boplay.acq_funs.ves_1d_regression_base import ves_1d_regression_base
 
@@ -55,3 +58,6 @@ ves_lr_2_2 = acq_fun_maker(fit_lr_2_2)
 ves_gamma_0_0 = acq_fun_maker(fit_gamma_0_0)
 ves_gamma_0_1 = acq_fun_maker(fit_gamma_0_1)
 ves_gamma_0_2 = acq_fun_maker(fit_gamma_0_2)
+ves_exp_0 = acq_fun_maker(fit_exp_0)
+ves_exp_1 = acq_fun_maker(fit_exp_1)
+ves_exp_2 = acq_fun_maker(fit_exp_2)

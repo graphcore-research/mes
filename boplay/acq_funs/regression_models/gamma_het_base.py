@@ -31,6 +31,8 @@ def fit_gamma_het_model(
     trend_basis_fun: Callable = None,
     k_basis_fun: Callable = None,
     beta_basis_fun: Callable = None,
+    k_min: float = 0.1,
+    k_max: float = 10.0,
 ) -> np.ndarray:
     """
     Fit a linear regression model with heteroskedastic noise to each
@@ -111,7 +113,7 @@ def fit_gamma_het_model(
         k = params[:, 0, None] + params[:, 1, None] * k_basis_pt
         theta = params[:, 2, None] + params[:, 3, None] * beta_basis_pt
 
-        k = k.clamp(min=1e-6, max=10)
+        k = k.clamp(min=k_min, max=k_max)
         theta = theta.clamp(min=1e-6, max=100)
 
         lhood = gamma_log_likelihood(x=noise_vals, k=k, theta=theta)
