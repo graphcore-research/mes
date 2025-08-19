@@ -11,8 +11,8 @@ def gamma_log_likelihood(*, x: pt.Tensor, k: pt.Tensor, theta: pt.Tensor) -> pt.
 
     Args:
         x: pt.Tensor, shape (n_x, n_points)
-        k: pt.Tensor, shape (n_x,)
-        theta: pt.Tensor, shape (n_x,)
+        k: pt.Tensor, shape (n_x, n_points)
+        theta: pt.Tensor, shape (n_x, n_points)
 
     Returns:
         log_likelihood: pt.Tensor, shape (n_x, n_points)
@@ -98,7 +98,7 @@ def fit_gamma_het_model(
 
     def loss_fun(params: pt.Tensor) -> float:
         """
-        Compute the loss for a given set of ramp parameters.
+        Compute the loss for a given set of parameters.
 
         Args:
             params: pt.Tensor, shape (n_x, 4)
@@ -122,8 +122,10 @@ def fit_gamma_het_model(
     params, _ = optimize_adam(theta=params, loss_fn=loss_fun)
 
     # evaluate to get final log lieklihoods and final acquisition values
+    # (n_x, n_points)
     k = params[:, 0, None] + params[:, 1, None] * k_basis_pt
     theta = params[:, 2, None] + params[:, 3, None] * beta_basis_pt
     gamma_lhood = gamma_log_likelihood(x=noise_vals, k=k,theta=theta)
-    
+
+    # (n_x, )
     return gamma_lhood.sum(dim=1).detach().cpu().numpy()
