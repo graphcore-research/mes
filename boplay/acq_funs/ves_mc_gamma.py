@@ -29,7 +29,7 @@ def ves_mc_gamma(
         n_ymax: int, number of y_max samples
         batch_size: int, batch size for the optimizer
         idx_train: np.ndarray, indices of the training points
-    
+
     Returns:
         np.ndarray, shape (n_x,)
     """
@@ -62,7 +62,7 @@ def ves_mc_gamma(
     y_max_shifted = y_max_shifted.reshape(n_x * n_yn1, n_ymax)
 
     # (n_x * n_yn1, ), (n_x * n_yn1, )
-    k, theta = estimate_gamma_params(x=y_max_shifted, max_iters=0, k_min=0.1)
+    k, theta = estimate_gamma_params(x=y_max_shifted)
 
     # (n_x * n_yn1, n_ymax): compute likelihood for each data y_max
     log_likelihood = gamma_log_likelihood(x=y_max_shifted, k=k, theta=theta)

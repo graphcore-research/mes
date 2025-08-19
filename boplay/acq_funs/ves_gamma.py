@@ -31,7 +31,7 @@ def ves_gamma(
         n_ymax: int, number of y_max samples
         batch_size: int, batch size for the optimizer
         idx_train: np.ndarray, indices of the training points
-    
+
     Returns:
         np.ndarray, shape (n_x,)
     """

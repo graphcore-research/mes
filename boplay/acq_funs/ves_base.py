@@ -36,9 +36,10 @@ def optimize_adam(
     *,
     theta: pt.Tensor,
     loss_fn: Callable,
-    max_iters: int=200,
+    max_iters: int = 200,
     tol: float=1e-9,
     lr: float=1e-2,
+    wd: float = 0.
 ) -> tuple[pt.Tensor, float]:
     """
     Optimize the given parameters using Adam.
@@ -49,12 +50,12 @@ def optimize_adam(
         max_iters: int, the maximum number of iterations
         tol: float, the tolerance for the optimization
         lr: float, the learning rate for the optimization
-    
+
     Returns:
         theta: pt.Tensor, shape (n_x, 4)
         final_loss: float, the optimized loss
     """
-    opt = pt.optim.Adam([theta], lr=lr, amsgrad=True)
+    opt = pt.optim.Adam([theta], lr=lr, amsgrad=True, weight_decay=wd)
     prev_loss = float("inf")
     L = None
 

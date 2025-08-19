@@ -5,8 +5,11 @@ from scipy.special import digamma, gammaln, polygamma
 def estimate_gamma_params(
     *,
     x: np.ndarray,
-    max_iters: int=10,
+    max_iters: int= 200,
     k_min: float=0.01,
+    k_max: float = 10.0,
+    lr: float = 1.,
+    wd: float = 0.
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Estimate the parameters of a Gamma distribution.
@@ -29,8 +32,10 @@ def estimate_gamma_params(
     k = (x_mean**2 / x_var).clip(min=k_min)
     s = np.log(x_mean) - np.log(x).mean(axis=1)
     for _ in range(max_iters):
-        k -= (np.log(k) - digamma(k) - s) / (1.0 / k - polygamma(1, k) + 1e-8)
-        k = k.clip(min=k_min)
+        loss = (np.log(k) - digamma(k) - s) / (1.0 / k - polygamma(1, k) + 1e-8)
+        loss += k**2 * wd
+        k -= loss * lr
+        k = k.clip(min=k_min, max=k_max)
     theta = x_mean / k
     return k, theta
 
