@@ -36,7 +36,7 @@ def gaussian_log_likelihood(
     )
     sdev = log_std.exp().clip(1e-6)
     lhood = half_log_pi_const - log_std - 0.5 * (x - mean)**2 / sdev**2
-    
+
     return lhood
 
 
@@ -46,6 +46,8 @@ def fit_lr_het_model(
     y_data: np.ndarray,
     trend_basis_fun: Callable = None,
     noise_basis_fun: Callable = None,
+    lr: float = 1e-2,
+    wd: float = 0.,
 ) -> np.ndarray:
     """
     Fit a linear regression model with heteroskedastic noise to each
@@ -116,12 +118,12 @@ def fit_lr_het_model(
 
         # (1, ) <- (n_x, n_points)
         return -lhood.sum()
-    
-    params, _ = optimize_adam(theta=params, loss_fn=loss_fun)
+
+    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd)
 
 
     y_mean = params[:, 0, None] + params[:, 1, None] * x_trend_pt
     y_log_sdev = params[:, 2, None] + params[:, 3, None] * x_noise_pt
     gauss_lhood = gaussian_log_likelihood(x=y_pt, mean=y_mean, log_std=y_log_sdev)
-    
+
     return gauss_lhood.sum(dim=1).detach().cpu().numpy()

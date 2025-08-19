@@ -38,8 +38,10 @@ def fit_gamma_het_model(
     trend_basis_fun: Callable = None,
     k_basis_fun: Callable = None,
     beta_basis_fun: Callable = None,
-    k_min: float = 0.1,
+    k_min: float = 0.01,
     k_max: float = 10.0,
+    lr: float = 1e-2,
+    wd: float = 0.,
 ) -> np.ndarray:
     """
     Fit a linear regression model with heteroskedastic noise to each
@@ -127,8 +129,8 @@ def fit_gamma_het_model(
 
         # (1, ) <- (n_x, n_points)
         return -lhood.sum()
-    
-    params, _ = optimize_adam(theta=params, loss_fn=loss_fun)
+
+    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd)
 
     # evaluate to get final log lieklihoods and final acquisition values
     # (n_x, n_points)

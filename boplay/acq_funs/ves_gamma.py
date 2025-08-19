@@ -16,6 +16,8 @@ def ves_gamma(
     n_ymax: int=100,
     batch_size: int=1e9,
     idx_train: np.ndarray,
+    lr: float = 1e-2,
+    wd: float = 0.0,
 ) -> np.ndarray:
     """
     Cheap Variational Entropy Search acquisition function.
@@ -31,7 +33,7 @@ def ves_gamma(
         n_ymax: int, number of y_max samples
         batch_size: int, batch size for the optimizer
         idx_train: np.ndarray, indices of the training points
-    
+
     Returns:
         np.ndarray, shape (n_x,)
     """
@@ -64,7 +66,7 @@ def ves_gamma(
     y_max_shifted = y_max_shifted.reshape(n_x, n_yn1 * n_ymax)
 
     # (n_x, n_yn1*n_ymax), (n_x, n_yn1*n_ymax)
-    k, theta = estimate_gamma_params(x=y_max_shifted)
+    k, theta = estimate_gamma_params(x=y_max_shifted, lr=lr, wd=wd)
 
     # NOTE: dead code here for future reference, we just use MC instead.
     # This is the analytic version of the function from the paper, however
