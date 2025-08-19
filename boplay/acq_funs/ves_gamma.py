@@ -60,7 +60,7 @@ def ves_gamma(
     # make sure they aren't exactly zero
     y_max_shifted = np.clip(y_max_shifted, min=1e-10)
 
-    # (n_x * n_yn1, n_ymax) flatten so each row is samples from one distribution
+    # (n_x , n_yn1 * n_ymax) flatten so each row is data to learn one (k, beta)
     y_max_shifted = y_max_shifted.reshape(n_x, n_yn1 * n_ymax)
 
     # (n_x, n_yn1*n_ymax), (n_x, n_yn1*n_ymax)
