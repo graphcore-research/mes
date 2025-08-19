@@ -4,7 +4,22 @@ from .ves_ramp import ves_exponential_ramp
 from .ves_mc_expo import ves_mc_exponential
 from .ves_mc_gamma import ves_mc_gamma
 from .ves_gamma import ves_gamma
-from .ves_1d_regression_lr import ves_1d_regression_lr
+from .ves_1d_regression import (
+    ves_1d_regression_lr,
+    ves_lr_0_0,
+    ves_lr_0_1,
+    ves_lr_0_2,
+    ves_lr_2_0,
+    ves_lr_2_1,
+    ves_lr_2_2,
+    ves_gamma_0_0,
+    ves_gamma_0_1,
+    ves_gamma_0_2,
+    ves_exp_0,
+    ves_exp_1,
+    ves_exp_2,
+)
+
 
 
 ACQ_FUNCS = {
@@ -15,4 +30,16 @@ ACQ_FUNCS = {
     "ves_mc_gamma": ves_mc_gamma,
     "ves_gamma": ves_gamma,
     "ves_1d_regression_lr": ves_1d_regression_lr,
+    "ves_lr_0_0": ves_lr_0_0,
+    "ves_lr_0_1": ves_lr_0_1,
+    "ves_lr_0_2": ves_lr_0_2,
+    "ves_lr_2_0": ves_lr_2_0,
+    "ves_lr_2_1": ves_lr_2_1,
+    "ves_lr_2_2": ves_lr_2_2,
+    "ves_gamma_0_0": ves_gamma_0_0,
+    "ves_gamma_0_1": ves_gamma_0_1,
+    "ves_gamma_0_2": ves_gamma_0_2,
+    "ves_exp_0": ves_exp_0,
+    "ves_exp_1": ves_exp_1,
+    "ves_exp_2": ves_exp_2,
 }

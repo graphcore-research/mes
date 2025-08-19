@@ -6,8 +6,8 @@ from multiprocessing import Pool, cpu_count
 from functools import partial
 
 from boplay.acq_funs import ACQ_FUNCS
-from boplay.bo_algorithm import BayesianOptimization
 from boplay.kernels import KERNELS
+from boplay.bo_algorithm import BayesianOptimization
 from boplay.benchmark_data import make_benchmark_data, Benchmark
 from tqdm import tqdm
 
@@ -17,12 +17,12 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 # Hyperparameter sweep
 acq_types = ACQ_FUNCS.keys()
 kernel_types = KERNELS.keys()
-len_scales = [1, 5, 10, 25, 50, 100]
-n_dims = [1, 2, 4, 8]
+len_scales = [25]
+n_dims = [2, 4]
 
 # n_x increases with dimensionality. E.g. in 2D n_x = 200 => 200**2 points.
 n_total_samples = 100
-n_y = 15  # Run quick
+n_y = 25  # Run quick
 n_init, n_final = 4, 25
 
 
