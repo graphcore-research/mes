@@ -57,7 +57,10 @@ def optimize_adam(
     """
     opt = pt.optim.Adam([theta], lr=lr, amsgrad=True, weight_decay=wd)
     prev_loss = float("inf")
-    L = None
+    L = loss_fn(theta)
+
+    loss_min = L.item()
+    theta_min = theta.detach().clone()
 
     for _ in range(max_iters):
         opt.zero_grad(set_to_none=True)
@@ -70,7 +73,11 @@ def optimize_adam(
             break
         prev_loss = L.item()
 
-    return theta.detach(), L.item()
+        if L.item() < loss_min:
+            loss_min = L.item()
+            theta_min = theta.detach().clone()
+
+    return theta_min, loss_min
 
 
 def ves_base(

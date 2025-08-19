@@ -42,6 +42,8 @@ def fit_gamma_het_model(
     k_max: float = 10.0,
     lr: float = 1e-2,
     wd: float = 0.,
+    max_iters: int = 200,
+    make_heatmap: bool = False,
 ) -> np.ndarray:
     """
     Fit a linear regression model with heteroskedastic noise to each
@@ -98,10 +100,10 @@ def fit_gamma_het_model(
     params = pt.nn.Parameter(
         pt.concat(
             [
+                pt.zeros(n_x, 1, **pt_params),
                 pt.ones(n_x, 1, **pt_params),
                 pt.zeros(n_x, 1, **pt_params),
                 noise_mean_emp,
-                pt.zeros(n_x, 1, **pt_params),
             ],
             axis=1
         )
@@ -119,8 +121,13 @@ def fit_gamma_het_model(
         """
 
         # (n_x, n_points)
-        k = params[:, 0, None] + params[:, 1, None] * k_basis_pt
-        theta = params[:, 2, None] + params[:, 3, None] * beta_basis_pt
+        m_k = params[:, 0, None]
+        c_k = params[:, 1, None]
+        m_theta = params[:, 2, None]
+        c_theta = params[:, 3, None]
+
+        k = m_k * k_basis_pt + c_k
+        theta = m_theta * beta_basis_pt + c_theta
 
         k = k.clamp(min=k_min, max=k_max)
         theta = theta.clamp(min=1e-6, max=100)
@@ -130,13 +137,70 @@ def fit_gamma_het_model(
         # (1, ) <- (n_x, n_points)
         return -lhood.sum()
 
-    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd)
+    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd, max_iters=max_iters)
 
-    # evaluate to get final log lieklihoods and final acquisition values
+    # evaluate to get final log likelihoods and final acquisition values
     # (n_x, n_points)
-    k = params[:, 0, None] + params[:, 1, None] * k_basis_pt
-    theta = params[:, 2, None] + params[:, 3, None] * beta_basis_pt
+    m_k = params[:, 0, None]
+    c_k = params[:, 1, None]
+    m_theta = params[:, 2, None]
+    c_theta = params[:, 3, None]
+
+    k = m_k * k_basis_pt + c_k
+    theta = m_theta * beta_basis_pt + c_theta
+
     gamma_lhood = gamma_log_likelihood(x=noise_vals, k=k,theta=theta)
 
-    # (n_x, )
-    return gamma_lhood.sum(dim=1).detach().cpu().numpy()
+    if not make_heatmap:
+        # (n_x, )
+        return gamma_lhood.sum(dim=1).detach().cpu().numpy()
+
+    else:
+        def make_heatmap(*, row_idx: int, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+            """
+            Make a heatmap of the Gamma log likelihood for a given row of the data.
+            """
+            assert len(x.shape) == 1, "x must be a 1D array"
+            assert len(y.shape) == 1, "y must be a 1D array"
+            assert x.shape[0] == y.shape[0], "x and y must have the same length"
+
+            trend_basis = trend_basis_fun(x)
+            k_basis = k_basis_fun(x)
+            theta_basis = beta_basis_fun(x)
+
+            noise_vals = y - trend_basis
+
+            mask = noise_vals <= 0
+
+            # go to pytorch world
+            noise_vals = pt.tensor(noise_vals, **pt_params)
+            k_basis = pt.tensor(k_basis, **pt_params)
+            theta_basis = pt.tensor(theta_basis, **pt_params)
+
+            # (float, float, float, float)
+            m_k, c_k, m_theta, c_theta = params[row_idx, :]
+
+            # (n_x,)
+            k = m_k * k_basis + c_k
+            theta = m_theta * theta_basis + c_theta
+
+            k = k.clamp(min=k_min, max=k_max)
+            theta = theta.clamp(min=1e-6, max=100)
+
+            # (n_x,)
+            gamma_lhood = gamma_log_likelihood(
+                x=noise_vals[None, :],
+                k=k[None, :],
+                theta=theta[None, :]
+            )
+
+            # and then come back to numpy
+            gamma_lhood_np = gamma_lhood.detach().cpu().numpy().flatten()
+
+            # negative values have probabilty=0, log(prob) = -inf
+            # Gamma distribution only generates positive values
+            gamma_lhood_np[mask] = -np.inf
+
+            return gamma_lhood_np
+        
+        return make_heatmap
