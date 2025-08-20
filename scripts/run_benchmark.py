@@ -17,7 +17,7 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 # Hyperparameter sweep
 wds = np.logspace(-2, 1, num=10) # 1e-2 -> 10
 lrs = np.logspace(-4, -0.5, num=10) # 1e-4 -> 5e-2
-acq_fun_params_list = [dict(lr=lr, wd=wd) for lr, wd in product(lrs, wds)]  # default params
+acq_fun_params_list = [dict(lr=lr, wd=wd, max_iters=max_iters) for lr, wd, max_iters in product(lrs, wds, [25])]  # default params
 acq_types = [
     "expected_improvement",
     "random_search",
