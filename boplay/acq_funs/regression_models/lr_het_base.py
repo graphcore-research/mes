@@ -13,6 +13,7 @@ pt_params = {
 
 half_log_pi_const = float(-0.5 * np.log(2 * np.pi))
 
+
 def gaussian_log_likelihood(
     *,
     x: pt.Tensor,
@@ -25,8 +26,8 @@ def gaussian_log_likelihood(
 
     Args:
         x: pt.Tensor, shape (n_x, n_points)
-        mean: pt.Tensor, shape (n_x,)
-        log_std: pt.Tensor, shape (n_x,)
+        mean: pt.Tensor, shape (n_x, n_points)
+        log_std: pt.Tensor, shape (n_x, n_points)
 
     Returns:
         lhood: pt.Tensor, shape (n_x, n_points)
@@ -36,7 +37,7 @@ def gaussian_log_likelihood(
     )
     sdev = log_std.exp().clip(1e-6)
     lhood = half_log_pi_const - log_std - 0.5 * (x - mean)**2 / sdev**2
-    
+
     return lhood
 
 
@@ -46,6 +47,9 @@ def fit_lr_het_model(
     y_data: np.ndarray,
     trend_basis_fun: Callable = None,
     noise_basis_fun: Callable = None,
+    lr: float = 1e-2,
+    wd: float = 0.,
+    make_heatmap: bool = False,
 ) -> np.ndarray:
     """
     Fit a linear regression model with heteroskedastic noise to each
@@ -56,6 +60,7 @@ def fit_lr_het_model(
         y_data: np.ndarray, shape (n_x, n_points)
         trend_basis_fun: Callable, the basis function for the trend
         noise_basis_fun: Callable, the basis function for the noise
+        make_heatmap: bool, whether to make a heatmap of the Gaussian log likelihood
 
     Returns:
         mse: np.ndarray, shape (n_x,)
@@ -90,10 +95,10 @@ def fit_lr_het_model(
     params = pt.nn.Parameter(
         pt.concat(
         [
+            pt.zeros(n_x, 1, **pt_params),
             y_mean_emp,
             pt.zeros(n_x, 1, **pt_params),
             y_log_std_emp,
-            pt.zeros(n_x, 1, **pt_params),
         ],
         axis=1
         )
@@ -110,18 +115,61 @@ def fit_lr_het_model(
             loss: float, the loss
         """
         # (n_x, n_points)
-        y_mean = params[:, 0, None] + params[:, 1, None] * x_trend_pt
-        y_log_sdev = params[:, 2, None] + params[:, 3, None] * x_noise_pt
-        lhood = gaussian_log_likelihood(x=y_pt, mean=y_mean, log_std=y_log_sdev)
+        m_trend = params[:, 0, None]
+        c_trend = params[:, 1, None]
+        m_stdev = params[:, 2, None]
+        c_stdev = params[:, 3, None]
+
+        y_trend = m_trend * x_trend_pt + c_trend
+        epsilon_log_sdev = m_stdev * x_noise_pt + c_stdev
+        lhood = gaussian_log_likelihood(x=y_pt, mean=y_trend, log_std=epsilon_log_sdev)
 
         # (1, ) <- (n_x, n_points)
         return -lhood.sum()
-    
-    params, _ = optimize_adam(theta=params, loss_fn=loss_fun)
+
+    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd)
+
+    m_trend = params[:, 0, None]
+    c_trend = params[:, 1, None]
+    m_stdev = params[:, 2, None]
+    c_stdev = params[:, 3, None]
+
+    y_trend = m_trend * x_trend_pt + c_trend
+    epsilon_log_sdev = m_stdev * x_noise_pt + c_stdev
+    gauss_lhood = gaussian_log_likelihood(x=y_pt, mean=y_trend, log_std=epsilon_log_sdev)
 
 
-    y_mean = params[:, 0, None] + params[:, 1, None] * x_trend_pt
-    y_log_sdev = params[:, 2, None] + params[:, 3, None] * x_noise_pt
-    gauss_lhood = gaussian_log_likelihood(x=y_pt, mean=y_mean, log_std=y_log_sdev)
-    
-    return gauss_lhood.sum(dim=1).detach().cpu().numpy()
+    gauss_lhood_vals = gauss_lhood.sum(dim=1).detach().cpu().numpy()
+
+    if not make_heatmap:
+        return gauss_lhood_vals
+
+    else:
+        def make_heatmap(*, row_idx: int, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+            """
+            Make a heatmap of the Gaussian log likelihood for a given row of the data.
+            """
+            assert len(x.shape) == 1, "x must be a 1D array"
+            assert len(y.shape) == 1, "y must be a 1D array"
+            assert x.shape[0] == y.shape[0], "x and y must have the same length"
+
+            trend_basis = trend_basis_fun(x)
+            noise_basis = noise_basis_fun(x)
+
+            trend_basis = pt.tensor(trend_basis, **pt_params)
+            noise_basis = pt.tensor(noise_basis, **pt_params)
+
+            m_trend, c_trend, m_stdev, c_stdev = params[row_idx, :]
+            y_trend = m_trend * trend_basis + c_trend
+            noise_log_sdev = m_stdev * noise_basis + c_stdev
+
+            # go to pytorch world
+            y = pt.tensor(y, **pt_params)
+            y_trend = pt.tensor(y_trend, **pt_params)
+            noise_log_sdev = pt.tensor(noise_log_sdev, **pt_params)
+
+            # and then come back to numpy
+            gauss_lhood = gaussian_log_likelihood(x=y, mean=y_trend, log_std=noise_log_sdev)
+            return gauss_lhood.detach().cpu().numpy()
+        
+        return make_heatmap

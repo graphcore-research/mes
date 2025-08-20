@@ -36,9 +36,10 @@ def optimize_adam(
     *,
     theta: pt.Tensor,
     loss_fn: Callable,
-    max_iters: int=200,
+    max_iters: int = 200,
     tol: float=1e-9,
     lr: float=1e-2,
+    wd: float = 0.
 ) -> tuple[pt.Tensor, float]:
     """
     Optimize the given parameters using Adam.
@@ -49,14 +50,17 @@ def optimize_adam(
         max_iters: int, the maximum number of iterations
         tol: float, the tolerance for the optimization
         lr: float, the learning rate for the optimization
-    
+
     Returns:
         theta: pt.Tensor, shape (n_x, 4)
         final_loss: float, the optimized loss
     """
-    opt = pt.optim.Adam([theta], lr=lr, amsgrad=True)
+    opt = pt.optim.Adam([theta], lr=lr, amsgrad=True, weight_decay=wd)
     prev_loss = float("inf")
-    L = None
+    L = loss_fn(theta)
+
+    loss_min = L.item()
+    theta_min = theta.detach().clone()
 
     for _ in range(max_iters):
         opt.zero_grad(set_to_none=True)
@@ -69,7 +73,11 @@ def optimize_adam(
             break
         prev_loss = L.item()
 
-    return theta.detach(), L.item()
+        if L.item() < loss_min:
+            loss_min = L.item()
+            theta_min = theta.detach().clone()
+
+    return theta_min, loss_min
 
 
 def ves_base(
@@ -84,6 +92,8 @@ def ves_base(
     compute_distro_params: Callable,
     compute_log_likelihood: Callable,
     idx_train: np.ndarray,
+    lr: float = 1e-2,
+    wd: float = 0.,
 ) -> np.ndarray:
     """
     Compute the acquisition function for the base case.
@@ -168,7 +178,7 @@ def ves_base(
 
     # optimize the parameters
     # params_optimal, _ = optimize_lbfgs(theta=params_initial,loss_fn=loss_fn)
-    params_optimal, _ = optimize_adam(theta=params_initial, loss_fn=loss_fn)
+    params_optimal, _ = optimize_adam(theta=params_initial, loss_fn=loss_fn, lr=lr, wd=wd)
 
     # (n_x_test, n_yn1):  compute the distro parameters
     distro_params = compute_distro_params(
