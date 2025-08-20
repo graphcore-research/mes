@@ -35,6 +35,7 @@ class BayesianOptimization:
         n_final:int=100,
         seed:int=0,
         verbose:bool=False,
+        acq_fun_params: dict = None,
     ) -> None:
         # benchmark ground truth data, x_grid is known to the algorithm,
         # y_true is not known to the algorithm and is collected one value
@@ -46,6 +47,7 @@ class BayesianOptimization:
         # algorithm parameters (constants)
         self.kernel = kernel
         self.acq_fun = acq_fun
+        self.acq_fun_params = acq_fun_params or {}
         self.n_init = n_init
         self.n_final = n_final
         self.seed = seed
@@ -84,6 +86,7 @@ class BayesianOptimization:
             y_cov=self.y_cov,
             y_best=self.y_best,
             idx_train=self.idx_train,
+            **self.acq_fun_params,
         )
         self.acq_fun_time = time.time() - start_time
 

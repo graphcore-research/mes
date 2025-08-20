@@ -1,5 +1,5 @@
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +16,7 @@ class Benchmark:
     n_y: int
     kernel: str
     kernel_params: dict
+    acq_fun_params: dict
     x_min: np.ndarray
     x_max: np.ndarray
 
@@ -97,6 +98,7 @@ def make_benchmark_data(
     x_min: np.ndarray=[0],
     x_max: np.ndarray=[100],
     kernel_params: dict = {"len_scale": 10.0, "sigma_f": 1.0},
+    acq_fun_params: dict = {},
     seed:int = 0,
 ) -> Benchmark:
     """ Make a benchmark data set for BO methods """
@@ -118,6 +120,7 @@ def make_benchmark_data(
         n_y=n_y,
         kernel=kernel_type,
         kernel_params=kernel_params,
+        acq_fun_params=acq_fun_params,
         x_min=x_min,
         x_max=x_max
     )

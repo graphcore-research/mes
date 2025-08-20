@@ -15,6 +15,7 @@ from tqdm import tqdm, trange
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 # Hyperparameter sweep
+acq_fun_params_list = [{}]  # default params
 acq_types = ACQ_FUNCS.keys()
 kernel_types = KERNELS.keys()
 len_scales = [25]
@@ -26,7 +27,7 @@ n_y = 25  # Run quick
 n_init, n_final = 4, 25
 
 
-def _make_benchmark_from_hps(kernel, len_scale, n_dim):
+def _make_benchmark_from_hps(kernel, len_scale, n_dim, acq_fun_params):
     x_min = np.asarray([0 for _ in range(n_dim)])
     x_max = np.asarray([100 for _ in range(n_dim)])
     n_x = int(n_total_samples ** (1 / n_dim))
@@ -35,6 +36,7 @@ def _make_benchmark_from_hps(kernel, len_scale, n_dim):
         n_y=n_y,
         kernel_type=kernel,
         kernel_params={"len_scale": len_scale, "sigma_f": 1.0},
+        acq_fun_params=acq_fun_params,
         x_min=x_min,
         x_max=x_max,
     )
@@ -53,6 +55,7 @@ def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
     """
     wid = current_process()._identity[0]
     x_grid = benchmark.x
+    acq_fun_params = benchmark.acq_fun_params
     n_test_funs, _ = benchmark.y.shape
     bos = []
     for i in trange(n_test_funs, leave=False, position=wid, desc=f"job: {wid}"):
@@ -67,6 +70,7 @@ def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
             n_init=n_init,
             n_final=n_final,
             seed=0,
+            acq_fun_params=acq_fun_params,
         )
         bo.run()
         bos.append(bo)
@@ -75,8 +79,8 @@ def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
 
 def _process_hyperparams(params):
     """Process a single hyperparameter combination."""
-    acq_type, kernel_type, len_scale, n_dim = params
-    benchmark = _make_benchmark_from_hps(kernel_type, len_scale, n_dim)
+    acq_type, kernel_type, len_scale, n_dim, acq_fun_params = params
+    benchmark = _make_benchmark_from_hps(kernel_type, len_scale, n_dim, acq_fun_params)
     bos = _fit(acq_type, benchmark)
 
     # Each row of dataframe is a single BO algorithm
@@ -107,7 +111,7 @@ def _process_hyperparams(params):
 
 
 if __name__ == "__main__":
-    param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims))
+    param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims, acq_fun_params_list))
     n_sweeps = len(param_combinations)
     lock = RLock()
     with Pool(processes=cpu_count(), initializer=tqdm.set_lock, initargs=(lock,)) as pool:
