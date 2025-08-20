@@ -106,7 +106,7 @@ def _plot_contours(
         if baseline_acq in data.index.get_level_values("acq_func"):
             final_step_baseline = final_steps[baseline_acq]
             baseline_data = data.loc[(baseline_acq, final_step_baseline)]
-            baseline_value = baseline_data[value_col].iloc[0]
+            baseline_value = baseline_data[value_col].mean()
             all_z_values.append(baseline_value)
 
     vmin, vmax = np.min(all_z_values), np.max(all_z_values)
@@ -150,7 +150,7 @@ def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col=
         if baseline_acq in data.index.get_level_values("acq_func"):
             final_step_baseline = final_steps[baseline_acq]
             baseline_data = data.loc[(baseline_acq, final_step_baseline)]
-            baseline_value = baseline_data[value_col].iloc[0]
+            baseline_value = baseline_data[value_col].mean()
 
             # Use abbreviated names for common acquisition functions
             acq_name = baseline_acq.replace("expected_improvement", "EI").replace(
