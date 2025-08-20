@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from itertools import product, chain
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, RLock, current_process
 from functools import partial
 
 from boplay.acq_funs import ACQ_FUNCS
@@ -51,10 +51,11 @@ def _fit(acq_type: str, benchmark: Benchmark) -> list[BayesianOptimization]:
 
     Seed 0 enforces reproduceability.
     """
+    wid = current_process()._identity[0]
     x_grid = benchmark.x
     n_test_funs, _ = benchmark.y.shape
     bos = []
-    for i in trange(n_test_funs, leave=False):
+    for i in trange(n_test_funs, leave=False, position=wid, desc=f"job: {wid}"):
         y_true = benchmark.y[i, :]
         acq_func = ACQ_FUNCS[acq_type]
         kernel = _make_kernel(benchmark)
@@ -108,12 +109,14 @@ def _process_hyperparams(params):
 if __name__ == "__main__":
     param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims))
     n_sweeps = len(param_combinations)
-    with Pool(processes=cpu_count()) as pool:
+    lock = RLock()
+    with Pool(processes=cpu_count(), initializer=tqdm.set_lock, initargs=(lock,)) as pool:
         # Run sweep in parallel, futures are evaluated lazily.
         # We don't care what order the futures return in.
         futures = tqdm(
             pool.imap_unordered(_process_hyperparams, param_combinations),
             total=n_sweeps,
+            desc="Total runs",
         )
         results = list(chain.from_iterable(futures))  # flatten & evaluate
 
