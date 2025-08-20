@@ -68,6 +68,11 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
     ax.set_title(acq_func.replace("_", " ").title())
     ax.set_xscale("log")
     ax.grid(True, alpha=0.3)
+    
+    # Adjust tick label positioning to prevent overlap
+    ax.tick_params(axis='x', pad=5)  # Add padding to x-axis tick labels
+    if i == 0:
+        ax.tick_params(axis='y', pad=5)  # Add padding to y-axis tick labels only for first subplot
 
     return contourf
 
@@ -117,7 +122,7 @@ def _plot_contours(
         # Create contour plot using helper function
         contourf = _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col)
 
-    plt.tight_layout()
+    plt.tight_layout(pad=2.0)
 
     # Add single colorbar for all subplots (outside the plot area)
     cbar = plt.colorbar(contourf, ax=axes, aspect=10, pad=0.02, fraction=0.08)
