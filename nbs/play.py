@@ -81,6 +81,61 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
 
     return contourf
 
+def _plot_all_contours(available_sweep_acqs, data, final_steps, baseline_acqs,
+                       kernel_type, n_dim, save_dir, value_col="mean"):
+    """Helper function to setup figure, plot all contour subplots and finish the figure."""
+    # Create subplots with shared y-axis
+    n_plots = len(available_sweep_acqs)
+    fig, axes = plt.subplots(1, n_plots, figsize=(5 * n_plots, 4), sharey=True)
+    if n_plots == 1:
+        axes = [axes]
+
+    # Get global min/max for consistent colorbar scale including baselines
+    all_z_values = []
+    for acq_func in available_sweep_acqs:
+        final_step = final_steps[acq_func]
+        acq_data = data.loc[(acq_func, final_step)]
+        all_z_values.extend(acq_data[value_col].values)
+
+    # Include baseline values in the scale calculation
+    for baseline_acq in baseline_acqs:
+        if baseline_acq in data.index.get_level_values("acq_func"):
+            final_step_baseline = final_steps[baseline_acq]
+            baseline_data = data.loc[(baseline_acq, final_step_baseline)]
+            baseline_value = baseline_data[value_col].iloc[0]
+            all_z_values.append(baseline_value)
+
+    vmin, vmax = np.min(all_z_values), np.max(all_z_values)
+    
+    # Plot all contours
+    contourf = None
+    for i, acq_func in enumerate(available_sweep_acqs):
+        ax = axes[i]
+        # Get data for this acquisition function at final step
+        final_step = final_steps[acq_func]
+        acq_data = data.loc[(acq_func, final_step)]
+
+        # Create contour plot using helper function
+        contourf = _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col)
+
+    plt.tight_layout()
+
+    # Add single colorbar for all subplots (outside the plot area)
+    cbar = plt.colorbar(contourf, ax=axes, aspect=10, pad=0.02, fraction=0.08)
+    cbar.set_label('Mean Regret')
+
+    # Add baseline annotations to colorbar
+    _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax, value_col)
+    plt.suptitle(f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14)
+
+    # Save figure
+    filename = f"contour_{kernel_type.replace('/', '_')}_{n_dim}d.png"
+    filepath = save_dir / filename
+    plt.savefig(filepath, dpi=300, bbox_inches="tight")
+    print(f"Saved: {filepath}")
+    plt.show()
+    plt.close()
+
 def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax, value_col="mean"):
     """Helper function to add baseline annotations to the colorbar."""
     if not baseline_acqs:
@@ -175,69 +230,11 @@ def plot_sweep_contours(
             lambda x: x.index.get_level_values("steps").max()
         )
 
-        # Filter sweep acquisition functions that exist in data
-        available_sweep_acqs = [
-            acq for acq in sweep_acqs if acq in data.index.get_level_values("acq_func")
-        ]
-
-        if not available_sweep_acqs:
-            print(f"No sweep acquisition functions found for {kernel_type}, {n_dim}")
-            continue
-
-        # Create subplots with shared y-axis
-        n_plots = len(available_sweep_acqs)
-        fig, axes = plt.subplots(1, n_plots, figsize=(5 * n_plots, 4), sharey=True)
-        if n_plots == 1:
-            axes = [axes]
-
-        # Get global min/max for consistent colorbar scale including baselines
-        all_z_values = []
-        for acq_func in available_sweep_acqs:
-            final_step = final_steps[acq_func]
-            acq_data = data.loc[(acq_func, final_step)]
-            all_z_values.extend(acq_data[value_col].values)
-
-        # Include baseline values in the scale calculation
-        for baseline_acq in baseline_acqs:
-            if baseline_acq in data.index.get_level_values("acq_func"):
-                final_step_baseline = final_steps[baseline_acq]
-                baseline_data = data.loc[(baseline_acq, final_step_baseline)]
-                baseline_value = baseline_data[value_col].iloc[0]
-                all_z_values.append(baseline_value)
-
-        vmin, vmax = np.min(all_z_values), np.max(all_z_values)
-
-        # Plot contours for sweep acquisition functions
-        for i, acq_func in enumerate(available_sweep_acqs):
-            ax = axes[i]
-            # Get data for this acquisition function at final step
-            final_step = final_steps[acq_func]
-            acq_data = data.loc[(acq_func, final_step)]
-
-            # Create contour plot using helper function
-            contourf = _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col)
-
-        plt.tight_layout()
-
-        # Add single colorbar for all subplots (outside the plot area)
-        cbar = plt.colorbar(contourf, ax=axes, aspect=10, pad=0.02, fraction=0.08)
-        cbar.set_label('Mean Regret')
-
-        # Add baseline annotations to colorbar
-        _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax, value_col)
-        plt.suptitle(f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14)
-
-        # Save figure
-        filename = f"contour_{kernel_type.replace('/', '_')}_{n_dim}d.png"
-        filepath = save_dir / filename
-        plt.savefig(filepath, dpi=300, bbox_inches="tight")
-        print(f"Saved: {filepath}")
-        plt.show()
-        plt.close()
+        # Plot contours for sweep acquisition functions and finish the figure
+        _plot_all_contours(sweep_acqs, data, final_steps, baseline_acqs,
+                          kernel_type, n_dim, save_dir, value_col)
 
 
-# %%
-# Example usage with available acquisition functions
 available_acq_funcs = regret_df.index.get_level_values("acq_func").unique()
 print("Available acquisition functions:", available_acq_funcs)
 
