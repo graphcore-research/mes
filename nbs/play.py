@@ -5,49 +5,39 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import scienceplots
 
-plt.style.use(["science", "grid"])
+plt.style.use(["science"])
 
-# %%
 SAVE_DIR = Path().cwd()  # mes/paper_plots
 DATA_DIR = Path().cwd().parent / "data"  # mes/data
 assert DATA_DIR.exists(), f"{DATA_DIR} does not exist"
 
-# %% [markdown]
-# ## Plotting HPs
-#
-# We'll want to make different figures for different kernel types, and dimensionality?
 
-# %%
-df = pd.read_json(DATA_DIR / "benchmark_df.json")
+def load_benchmark_data(data_dir):
+    """Load and process benchmark data from JSON file."""
+    df = pd.read_json(data_dir / "benchmark_df.json")
 
-df["regret"] = df.apply(
-    lambda x: x["y_true_max"] - np.array(x["y_max_history"]), axis=1
-)
-df = df.drop(columns=["y_true_max", "final_y_max", "y_max_history"])  # cleanup rows
-df = df.explode(
-    ["regret", "steps"], ignore_index=True
-)  # explode history into seperate rows
-df["regret"] = pd.to_numeric(df["regret"], errors="raise")
-df
+    # Calculate regret from y_true_max and y_max_history
+    df["regret"] = df.apply(
+        lambda x: x["y_true_max"] - np.array(x["y_max_history"]), axis=1
+    )
 
-# %%
-regret_df = df.groupby(["kernel_type", "n_dim", "acq_func", "steps", "lr", "wd"])
-regret_df = regret_df["regret"].agg(["mean", "std", "count"])
-regret_df  # multi-index of key: (kernel_type, n_dim, acq_func, steps)
+    # Cleanup unnecessary columns
+    df = df.drop(columns=["y_true_max", "final_y_max", "y_max_history"])
 
-# %%
-regret_df.index.get_level_values("acq_func").unique()
+    # Explode history into separate rows
+    df = df.explode(["regret", "steps"], ignore_index=True)
+    df["regret"] = pd.to_numeric(df["regret"], errors="raise")
 
-# %% [markdown]
-# This gives us a multi-index dataframe with unique keys of `(kernel_type, n_dim, acq_func, steps)` and mean, std, count regret for each row.
-#
-# To index into a single kernel / dimension, we can use:
-
-# %%
-print(regret_df.loc[("matern-3/2", 4)])
+    return df
 
 
-# %%
+def aggregate_regret_data(df):
+    """Group and aggregate regret data by experimental conditions."""
+    regret_df = df.groupby(["kernel_type", "n_dim", "acq_func", "steps", "lr", "wd"])
+    regret_df = regret_df["regret"].agg(["mean", "std", "count"])
+    return regret_df
+
+
 def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
     """Helper function to create a single contour plot."""
     # Create pivot table for contour plotting
@@ -82,7 +72,7 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
     return contourf
 
 
-def _plot_all_contours(
+def _plot_contours(
     available_sweep_acqs,
     data,
     final_steps,
@@ -134,9 +124,7 @@ def _plot_all_contours(
     cbar.set_label("Mean Regret")
 
     # Add baseline annotations to colorbar
-    _add_baseline_annotations(
-        cbar, data, final_steps, baseline_acqs, value_col
-    )
+    _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col)
     plt.suptitle(f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14)
 
     # Save figure
@@ -148,9 +136,7 @@ def _plot_all_contours(
     plt.close()
 
 
-def _add_baseline_annotations(
-    cbar, data, final_steps, baseline_acqs, value_col="mean"
-):
+def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col="mean"):
     """Helper function to add baseline annotations to the colorbar."""
     if not baseline_acqs:
         return
@@ -238,7 +224,7 @@ def plot_sweep_contours(
         )
 
         # Plot contours for sweep acquisition functions and finish the figure
-        _plot_all_contours(
+        _plot_contours(
             sweep_acqs,
             data,
             final_steps,
@@ -250,10 +236,16 @@ def plot_sweep_contours(
         )
 
 
-available_acq_funcs = regret_df.index.get_level_values("acq_func").unique()
-print("Available acquisition functions:", available_acq_funcs)
+df = load_benchmark_data(DATA_DIR)
+regret_df = aggregate_regret_data(df)
 
-# Test the plotting function with available acquisition functions
+available_acq_funcs = regret_df.index.get_level_values("acq_func").unique()
+print("Available acquisition functions:", ", ".join(available_acq_funcs))
+
+print("Example data for matern-3/2, 4D:")
+print(regret_df.loc[("matern-3/2", 4)])
+
+
 plot_sweep_contours(
     regret_df,
     save_dir=str(SAVE_DIR / "contour_plots"),
