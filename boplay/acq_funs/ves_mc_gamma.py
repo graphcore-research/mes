@@ -16,6 +16,7 @@ def ves_mc_gamma(
     idx_train: np.ndarray,
     lr: float = 1e-2,
     wd: float = 0.0,
+    max_iters: int = 200,
 ) -> np.ndarray:
     """
     Cheap Variational Entropy Search acquisition function.
@@ -64,7 +65,7 @@ def ves_mc_gamma(
     y_max_shifted = y_max_shifted.reshape(n_x * n_yn1, n_ymax)
 
     # (n_x * n_yn1, ), (n_x * n_yn1, )
-    k, theta = estimate_gamma_params(x=y_max_shifted, lr=lr, wd=wd)
+    k, theta = estimate_gamma_params(x=y_max_shifted, lr=lr, wd=wd, max_iters=max_iters)
 
     # (n_x * n_yn1, n_ymax): compute likelihood for each data y_max
     log_likelihood = gamma_log_likelihood(x=y_max_shifted, k=k, theta=theta)

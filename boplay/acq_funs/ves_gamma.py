@@ -1,7 +1,10 @@
 import numpy as np
 
 from boplay.acq_funs.mes_utils import sample_yn1_ymax, reconstruct_full_vector
-from boplay.acq_funs.gamma_distribution import estimate_gamma_params, gamma_log_likelihood
+from boplay.acq_funs.gamma_distribution import (
+    estimate_gamma_params,
+    gamma_log_likelihood,
+)
 from scipy.special import gammaln
 from scipy.stats import norm
 
@@ -12,12 +15,13 @@ def ves_gamma(
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     y_best: float,
-    n_yn1: int=20,
-    n_ymax: int=100,
-    batch_size: int=1e9,
+    n_yn1: int = 20,
+    n_ymax: int = 100,
+    batch_size: int = 1e9,
     idx_train: np.ndarray,
     lr: float = 1e-2,
     wd: float = 0.0,
+    max_iters: int = 200,
 ) -> np.ndarray:
     """
     Cheap Variational Entropy Search acquisition function.
@@ -66,7 +70,7 @@ def ves_gamma(
     y_max_shifted = y_max_shifted.reshape(n_x, n_yn1 * n_ymax)
 
     # (n_x, n_yn1*n_ymax), (n_x, n_yn1*n_ymax)
-    k, theta = estimate_gamma_params(x=y_max_shifted, lr=lr, wd=wd)
+    k, theta = estimate_gamma_params(x=y_max_shifted, lr=lr, wd=wd, max_iters=max_iters)
 
     # NOTE: dead code here for future reference, we just use MC instead.
     # This is the analytic version of the function from the paper, however
@@ -107,9 +111,3 @@ def ves_gamma(
     )
 
     return acq_fun_vals
-
-
-
-
-
-
