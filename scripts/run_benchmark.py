@@ -15,11 +15,18 @@ from tqdm import tqdm, trange
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 # Hyperparameter sweep
-acq_fun_params_list = [{}]  # default params
-acq_types = ACQ_FUNCS.keys()
-kernel_types = KERNELS.keys()
+wds = np.linspace(0, 10, num=10)
+lrs = np.logspace(-3, 0, num=10) # 1e-3 -> 1
+acq_fun_params_list = [dict(lr=lr, wd=wd) for lr, wd in product(lrs, wds)]  # default params
+acq_types = [
+    "expected_improvement",
+    "random_search",
+    "ves_mc_gamma",
+    "ves_gamma",
+]
+kernel_types = ["matern-3/2"]
 len_scales = [25]
-n_dims = [2, 4]
+n_dims = [4]
 
 # n_x increases with dimensionality. E.g. in 2D n_x = 200 => 200**2 points.
 n_total_samples = 100
@@ -105,13 +112,16 @@ def _process_hyperparams(params):
             "final_y_max": final_y_max,  # (B,)
             "y_max_history": y_max_history,  # (B, T)
             "steps": steps,  # (B, T)
+            **acq_fun_params, # lr, wd
         }
         rows.append(row)
     return rows
 
 
 if __name__ == "__main__":
-    param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims, acq_fun_params_list))
+    param_combinations = list(
+        product(acq_types, kernel_types, len_scales, n_dims, acq_fun_params_list)
+    )
     n_sweeps = len(param_combinations)
     lock = RLock()
     with Pool(processes=cpu_count(), initializer=tqdm.set_lock, initargs=(lock,)) as pool:
