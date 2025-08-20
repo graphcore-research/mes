@@ -15,8 +15,8 @@ from tqdm import tqdm, trange
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 # Hyperparameter sweep
-wds = np.linspace(0, 10, num=10)
-lrs = np.logspace(-3, 0, num=10) # 1e-3 -> 1
+wds = np.logspace(-2, 1, num=10) # 1e-2 -> 10
+lrs = np.logspace(-4, -0.5, num=10) # 1e-4 -> 5e-2
 acq_fun_params_list = [dict(lr=lr, wd=wd) for lr, wd in product(lrs, wds)]  # default params
 acq_types = [
     "expected_improvement",
@@ -24,9 +24,9 @@ acq_types = [
     "ves_mc_gamma",
     "ves_gamma",
 ]
-kernel_types = ["matern-3/2"]
+kernel_types = ["matern-3/2", "matern-5/2"]
 len_scales = [25]
-n_dims = [4]
+n_dims = [2, 4]
 
 # n_x increases with dimensionality. E.g. in 2D n_x = 200 => 200**2 points.
 n_total_samples = 100
