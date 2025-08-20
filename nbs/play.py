@@ -48,11 +48,84 @@ print(regret_df.loc[("matern-3/2", 4)])
 
 
 # %%
+def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
+    """Helper function to create a single contour plot."""
+    # Create pivot table for contour plotting
+    lr_values = acq_data.index.get_level_values("lr").unique()
+    wd_values = acq_data.index.get_level_values("wd").unique()
+
+    # Create meshgrid
+    lr_grid = np.array(sorted(lr_values))
+    wd_grid = np.array(sorted(wd_values))
+    LR, WD = np.meshgrid(lr_grid, wd_grid)
+
+    # Fill Z values
+    Z = np.zeros_like(LR)
+    for j, wd in enumerate(wd_grid):
+        for k, lr in enumerate(lr_grid):
+            try:
+                Z[j, k] = acq_data.loc[(lr, wd), value_col]
+            except KeyError:
+                Z[j, k] = np.nan
+
+    # Create contour plot with slightly more levels for smoother visual appearance
+    contourf = ax.contourf(LR, WD, Z, levels=15, alpha=1.0, vmin=vmin, vmax=vmax)
+
+    # Configure axes
+    ax.set_xlabel("Learning Rate")
+    if i == 0:  # Only label y-axis for first subplot since they share y
+        ax.set_ylabel("Weight Decay")
+    ax.set_title(acq_func.replace("_", " ").title())
+    ax.set_xscale("log")
+    ax.grid(True, alpha=0.3)
+
+    return contourf
+
+def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax, value_col="mean"):
+    """Helper function to add baseline annotations to the colorbar."""
+    if not baseline_acqs:
+        return
+
+    import matplotlib.cm as cm
+    import matplotlib.colors as mcolors
+
+    # Get color normalization for the colorbar
+    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+    cmap = cm.get_cmap("viridis")
+
+    cbar_ax = cbar.ax
+
+    for i, baseline_acq in enumerate(baseline_acqs):
+        if baseline_acq in data.index.get_level_values("acq_func"):
+            final_step_baseline = final_steps[baseline_acq]
+            baseline_data = data.loc[(baseline_acq, final_step_baseline)]
+            baseline_value = baseline_data[value_col].iloc[0]
+
+            # Use abbreviated names for common acquisition functions
+            acq_name = baseline_acq.replace("expected_improvement", "EI").replace("random_search", "RS")
+
+            # Position all annotations at the same horizontal offset
+            x_offset = 1.3
+
+            # Add arrow pointing to baseline position on colorbar
+            cbar_ax.annotate(
+                f"{acq_name}: {baseline_value:.3f}",
+                xy=(1.0, baseline_value),
+                xycoords=("axes fraction", "data"),
+                xytext=(x_offset, baseline_value),
+                textcoords=("axes fraction", "data"),
+                arrowprops=dict(arrowstyle="->", color="black", lw=2),
+                fontsize=10,
+                ha="left",
+                va="center",
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9),
+            )
+
 def plot_sweep_contours(
     regret_df,
-    save_dir="plots",
-    sweep_acqs=["ves_gamma", "ves_mv_gamma"],
-    baseline_acq="expected_improvement",
+    save_dir,
+    sweep_acqs,
+    baseline_acqs,
     value_col="mean",
 ):
     """
@@ -70,9 +143,9 @@ def plot_sweep_contours(
     - For selected acquisition functions (e.g., ['ves_gamma', 'ves_mv_gamma']),
       it makes *one subplot per acq_func* showing a contour of (lr, wd) → value at
       the final step.
-    - For baseline acq_func that don't use lr/wd a.k.a ei
-      it computes the *lowest final value* and shows those numbers on the figure,
-      but **does not** draw contours for them, this should be a baseline
+    - For baseline acq_funcs that don't use lr/wd (e.g., EI, random search)
+      it computes the *final values* and shows them as annotations on the colorbar,
+      but **does not** draw contours for them
     - Saves one figure per (kernel_type, n_dim).
 
     Usage
@@ -81,7 +154,7 @@ def plot_sweep_contours(
         regret_df,
         save_dir="plots",
         sweep_acqs=["ves_gamma", "ves_mv_gamma"],
-        baseline_acq="expected_improvement",
+        baseline_acqs=["expected_improvement", "random_search"],
         value_col="mean",
     )
     """
@@ -117,67 +190,32 @@ def plot_sweep_contours(
         if n_plots == 1:
             axes = [axes]
 
-        # Get global min/max for consistent colorbar scale
+        # Get global min/max for consistent colorbar scale including baselines
         all_z_values = []
         for acq_func in available_sweep_acqs:
             final_step = final_steps[acq_func]
             acq_data = data.loc[(acq_func, final_step)]
             all_z_values.extend(acq_data[value_col].values)
 
+        # Include baseline values in the scale calculation
+        for baseline_acq in baseline_acqs:
+            if baseline_acq in data.index.get_level_values("acq_func"):
+                final_step_baseline = final_steps[baseline_acq]
+                baseline_data = data.loc[(baseline_acq, final_step_baseline)]
+                baseline_value = baseline_data[value_col].iloc[0]
+                all_z_values.append(baseline_value)
+
         vmin, vmax = np.min(all_z_values), np.max(all_z_values)
 
         # Plot contours for sweep acquisition functions
         for i, acq_func in enumerate(available_sweep_acqs):
             ax = axes[i]
-
             # Get data for this acquisition function at final step
             final_step = final_steps[acq_func]
             acq_data = data.loc[(acq_func, final_step)]
 
-            # Create pivot table for contour plotting
-            lr_values = acq_data.index.get_level_values("lr").unique()
-            wd_values = acq_data.index.get_level_values("wd").unique()
-
-            # Create meshgrid
-            lr_grid = np.array(sorted(lr_values))
-            wd_grid = np.array(sorted(wd_values))
-            LR, WD = np.meshgrid(lr_grid, wd_grid)
-
-            # Fill Z values
-            Z = np.zeros_like(LR)
-            for j, wd in enumerate(wd_grid):
-                for k, lr in enumerate(lr_grid):
-                    try:
-                        Z[j, k] = acq_data.loc[(lr, wd), value_col]
-                    except KeyError:
-                        Z[j, k] = np.nan
-
-            # Create contour plot with slightly more levels for smoother visual appearance
-            contourf = ax.contourf(
-                LR, WD, Z, levels=15, alpha=1.0, vmin=vmin, vmax=vmax
-            )
-
-            ax.set_xlabel("Learning Rate")
-            if i == 0:  # Only label y-axis for first subplot since they share y
-                ax.set_ylabel("Weight Decay")
-            ax.set_title(acq_func.replace("_", " ").title())
-            ax.set_xscale("log")
-            ax.grid(True, alpha=0.3)
-
-        # Add baseline information if available
-        if baseline_acq in data.index.get_level_values("acq_func"):
-            final_step_baseline = final_steps[baseline_acq]
-            baseline_data = data.loc[(baseline_acq, final_step_baseline)]
-            baseline_value = baseline_data[value_col].iloc[0]
-
-            # Create a small colored box showing baseline value
-            import matplotlib.cm as cm
-            import matplotlib.colors as mcolors
-
-            # Get color for baseline value from the same colormap
-            norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
-            cmap = cm.get_cmap("viridis")
-            baseline_color = cmap(norm(baseline_value))
+            # Create contour plot using helper function
+            contourf = _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col)
 
         plt.tight_layout()
 
@@ -185,22 +223,8 @@ def plot_sweep_contours(
         cbar = plt.colorbar(contourf, ax=axes, aspect=10, pad=0.02, fraction=0.08)
         cbar.set_label('Mean Regret')
 
-        # Add baseline info next to colorbar if available
-        if baseline_acq in data.index.get_level_values("acq_func"):
-            # Add arrow pointing to EI position on colorbar using data coordinates
-            cbar_ax = cbar.ax
-            cbar_ax.annotate(
-                f"EI: {baseline_value:.3f}",
-                xy=(1.0, baseline_value),
-                xycoords=("axes fraction", "data"),
-                xytext=(1.3, baseline_value),
-                textcoords=("axes fraction", "data"),
-                arrowprops=dict(arrowstyle="->", color="black", lw=2),
-                fontsize=10,
-                ha="left",
-                va="center",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9),
-            )
+        # Add baseline annotations to colorbar
+        _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax, value_col)
         plt.suptitle(f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14)
 
         # Save figure
@@ -222,7 +246,7 @@ plot_sweep_contours(
     regret_df,
     save_dir=str(SAVE_DIR / "contour_plots"),
     sweep_acqs=["ves_gamma", "ves_mc_gamma"],  # Use what's available in your data
-    baseline_acq="expected_improvement",
+    baseline_acqs=["expected_improvement", "random_search"],  # Multiple baselines
     value_col="mean",
 )
 
