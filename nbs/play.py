@@ -81,8 +81,17 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
 
     return contourf
 
-def _plot_all_contours(available_sweep_acqs, data, final_steps, baseline_acqs,
-                       kernel_type, n_dim, save_dir, value_col="mean"):
+
+def _plot_all_contours(
+    available_sweep_acqs,
+    data,
+    final_steps,
+    baseline_acqs,
+    kernel_type,
+    n_dim,
+    save_dir,
+    value_col="mean",
+):
     """Helper function to setup figure, plot all contour subplots and finish the figure."""
     # Create subplots with shared y-axis
     n_plots = len(available_sweep_acqs)
@@ -106,7 +115,7 @@ def _plot_all_contours(available_sweep_acqs, data, final_steps, baseline_acqs,
             all_z_values.append(baseline_value)
 
     vmin, vmax = np.min(all_z_values), np.max(all_z_values)
-    
+
     # Plot all contours
     contourf = None
     for i, acq_func in enumerate(available_sweep_acqs):
@@ -122,10 +131,12 @@ def _plot_all_contours(available_sweep_acqs, data, final_steps, baseline_acqs,
 
     # Add single colorbar for all subplots (outside the plot area)
     cbar = plt.colorbar(contourf, ax=axes, aspect=10, pad=0.02, fraction=0.08)
-    cbar.set_label('Mean Regret')
+    cbar.set_label("Mean Regret")
 
     # Add baseline annotations to colorbar
-    _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax, value_col)
+    _add_baseline_annotations(
+        cbar, data, final_steps, baseline_acqs, value_col
+    )
     plt.suptitle(f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14)
 
     # Save figure
@@ -136,19 +147,13 @@ def _plot_all_contours(available_sweep_acqs, data, final_steps, baseline_acqs,
     plt.show()
     plt.close()
 
-def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax, value_col="mean"):
+
+def _add_baseline_annotations(
+    cbar, data, final_steps, baseline_acqs, value_col="mean"
+):
     """Helper function to add baseline annotations to the colorbar."""
     if not baseline_acqs:
         return
-
-    import matplotlib.cm as cm
-    import matplotlib.colors as mcolors
-
-    # Get color normalization for the colorbar
-    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
-    cmap = cm.get_cmap("viridis")
-
-    cbar_ax = cbar.ax
 
     for i, baseline_acq in enumerate(baseline_acqs):
         if baseline_acq in data.index.get_level_values("acq_func"):
@@ -157,13 +162,15 @@ def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax
             baseline_value = baseline_data[value_col].iloc[0]
 
             # Use abbreviated names for common acquisition functions
-            acq_name = baseline_acq.replace("expected_improvement", "EI").replace("random_search", "RS")
+            acq_name = baseline_acq.replace("expected_improvement", "EI").replace(
+                "random_search", "RS"
+            )
 
             # Position all annotations at the same horizontal offset
             x_offset = 1.3
 
             # Add arrow pointing to baseline position on colorbar
-            cbar_ax.annotate(
+            cbar.ax.annotate(
                 f"{acq_name}: {baseline_value:.3f}",
                 xy=(1.0, baseline_value),
                 xycoords=("axes fraction", "data"),
@@ -175,6 +182,7 @@ def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, vmin, vmax
                 va="center",
                 bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9),
             )
+
 
 def plot_sweep_contours(
     regret_df,
@@ -213,7 +221,6 @@ def plot_sweep_contours(
         value_col="mean",
     )
     """
-    from pathlib import Path
 
     save_dir = Path(save_dir)
     save_dir.mkdir(exist_ok=True)
@@ -231,8 +238,16 @@ def plot_sweep_contours(
         )
 
         # Plot contours for sweep acquisition functions and finish the figure
-        _plot_all_contours(sweep_acqs, data, final_steps, baseline_acqs,
-                          kernel_type, n_dim, save_dir, value_col)
+        _plot_all_contours(
+            sweep_acqs,
+            data,
+            final_steps,
+            baseline_acqs,
+            kernel_type,
+            n_dim,
+            save_dir,
+            value_col,
+        )
 
 
 available_acq_funcs = regret_df.index.get_level_values("acq_func").unique()
