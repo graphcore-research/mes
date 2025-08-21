@@ -90,6 +90,7 @@ class BayesianOptimization:
             y_mean=self.y_mean,
             y_cov=self.y_cov,
             y_best=self.y_best,
+            y_noise_std=self.y_noise_std,
             idx_train= [] if self.y_noise_std > 1e-3 else self.idx_train,
         )
         self.acq_fun_time = time.time() - start_time
