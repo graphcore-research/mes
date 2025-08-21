@@ -89,6 +89,7 @@ class BayesianOptimization:
             x_grid=self.x_grid,
             y_mean=self.y_mean,
             y_cov=self.y_cov,
+            y_noise_std=self.y_noise_std,
             y_best=self.y_best,
             idx_train= [] if self.y_noise_std > 1e-3 else self.idx_train,
         )
@@ -130,7 +131,7 @@ class BayesianOptimization:
             {
                 "n_train": len(self.y_train),
                 "y_mean": self.y_mean,
-                "y_sd": np.sqrt(np.diag(self.y_cov)),
+                "y_sd": np.sqrt(np.clip(np.diag(self.y_cov), 1e-6, None)),
                 "acq_fun_vals": self.acq_fun_vals,
                 "acq_fun_time": self.acq_fun_time,
                 "predict_time": self.predict_time,
