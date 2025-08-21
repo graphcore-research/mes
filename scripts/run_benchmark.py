@@ -15,25 +15,26 @@ from tqdm import tqdm, trange
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 # Hyperparameter sweep
-wds = np.logspace(-2, 1, num=10)  # 1e-2 -> 10
-lrs = np.logspace(-4, -0.5, num=10)  # 1e-4 -> 5e-2
+wds = [0] + list(np.logspace(-2, 1, num=4))  # 0, 1e-2 -> 10
+lrs = np.logspace(-3, 0.5, num=4)  # 1e-3 -> 1
 acq_fun_params_list = [
     dict(lr=lr, wd=wd, max_iters=max_iters)
-    for lr, wd, max_iters in product(lrs, wds, [50])
+    for lr, wd, max_iters in product(lrs, wds, [200])
 ]  # default params
+# acq_fun_params_list = [{"max_iters": 50}]
 acq_types = [
-    "ves_mc_gamma",
+    # "ves_mc_gamma",
     "ves_gamma",
     "expected_improvement",
     "random_search",
 ]
 kernel_types = ["matern-3/2", "matern-5/2"]
-len_scales = [10, 25]
+len_scales = [25]
 n_dims = [2, 4]
 
 # n_x increases with dimensionality. E.g. in 2D n_x = 200 => 200**2 points.
 n_total_samples = 100
-n_y = 25  # Run quick
+n_y = 10  # Run quick
 n_init, n_final = 4, 25
 
 
