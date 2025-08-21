@@ -7,14 +7,14 @@ import scienceplots
 
 plt.style.use(["science"])
 
-SAVE_DIR = Path().cwd()  # mes/paper_plots
+SAVE_DIR = Path().cwd()  # mes/nbs
 DATA_DIR = Path().cwd().parent / "data"  # mes/data
 assert DATA_DIR.exists(), f"{DATA_DIR} does not exist"
 
 
 def load_benchmark_data(data_dir):
     """Load and process benchmark data from JSON file."""
-    df = pd.read_json(data_dir / "benchmark_df.json")
+    df = pd.read_json(data_dir / "benchmark_df_sweep.json")
 
     # Calculate regret from y_true_max and y_max_history
     df["regret"] = df.apply(
@@ -58,8 +58,11 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
             except KeyError:
                 Z[j, k] = np.nan
 
+
     # Create contour plot with slightly more levels for smoother visual appearance
-    contourf = ax.contourf(LR, WD, Z, levels=15, alpha=1.0, vmin=vmin, vmax=vmax)
+    # Force the levels to respect vmin/vmax
+    levels = np.linspace(vmin, vmax, 16)
+    contourf = ax.contourf(LR, WD, Z, levels=levels, alpha=1.0, vmin=vmin, vmax=vmax, cmap='viridis', extend='both')
 
     # Configure axes
     ax.set_xlabel("Learning Rate")
@@ -68,7 +71,7 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
     ax.set_title(acq_func.replace("_", " ").title())
     ax.set_xscale("log")
     ax.grid(True, alpha=0.3)
-    
+
     # Adjust tick label positioning to prevent overlap
     ax.tick_params(axis='x', pad=5)  # Add padding to x-axis tick labels
     if i == 0:
@@ -94,22 +97,19 @@ def _plot_contours(
     if n_plots == 1:
         axes = [axes]
 
-    # Get global min/max for consistent colorbar scale including baselines
+    # Get global min/max for consistent colorbar scale excluding baselines
     all_z_values = []
     for acq_func in available_sweep_acqs:
         final_step = final_steps[acq_func]
         acq_data = data.loc[(acq_func, final_step)]
         all_z_values.extend(acq_data[value_col].values)
 
-    # Include baseline values in the scale calculation
-    for baseline_acq in baseline_acqs:
-        if baseline_acq in data.index.get_level_values("acq_func"):
-            final_step_baseline = final_steps[baseline_acq]
-            baseline_data = data.loc[(baseline_acq, final_step_baseline)]
-            baseline_value = baseline_data[value_col].mean()
-            all_z_values.append(baseline_value)
-
     vmin, vmax = np.min(all_z_values), np.max(all_z_values)
+
+    # Ensure there's a minimum range for the colorbar
+    if vmax - vmin < 1e-6:
+        vmax = vmin + 1e-6
+
 
     # Plot all contours
     contourf = None
@@ -129,44 +129,57 @@ def _plot_contours(
     cbar.set_label("Mean Regret")
 
     # Add baseline annotations to colorbar
-    _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col)
+    _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col, vmin, vmax)
     plt.suptitle(f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14)
 
     # Save figure
     filename = f"contour_{kernel_type.replace('/', '_')}_{n_dim}d.png"
     filepath = save_dir / filename
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
-    print(f"Saved: {filepath}")
     plt.show()
     plt.close()
 
 
-def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col="mean"):
+def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col="mean", vmin=None, vmax=None):
     """Helper function to add baseline annotations to the colorbar."""
     if not baseline_acqs:
         return
 
-    for i, baseline_acq in enumerate(baseline_acqs):
+    for baseline_acq in baseline_acqs:
         if baseline_acq in data.index.get_level_values("acq_func"):
             final_step_baseline = final_steps[baseline_acq]
             baseline_data = data.loc[(baseline_acq, final_step_baseline)]
             baseline_value = baseline_data[value_col].mean()
+
+            # Clip baseline value to colorbar range if provided
+            clipped_value = baseline_value
+            if vmin is not None and vmax is not None:
+                clipped_value = np.clip(baseline_value, vmin, vmax)
 
             # Use abbreviated names for common acquisition functions
             acq_name = baseline_acq.replace("expected_improvement", "EI").replace(
                 "random_search", "RS"
             )
 
+
             # Position all annotations at the same horizontal offset
             x_offset = 1.3
+
+            # For values above vmax, position at the top edge of colorbar
+            if baseline_value > vmax:
+                arrow_y = 1.0  # Top of colorbar in axes fraction
+                coords_type = "axes fraction"
+            else:
+                arrow_y = clipped_value
+                coords_type = "data"
 
             # Add arrow pointing to baseline position on colorbar
             cbar.ax.annotate(
                 f"{acq_name}: {baseline_value:.3f}",
-                xy=(1.0, baseline_value),
-                xycoords=("axes fraction", "data"),
-                xytext=(x_offset, baseline_value),
-                textcoords=("axes fraction", "data"),
+                xy=(1.0, arrow_y),
+                xycoords=("axes fraction", coords_type),
+                xytext=(x_offset, arrow_y),
+                textcoords=("axes fraction", coords_type),
                 arrowprops=dict(arrowstyle="->", color="black", lw=2),
                 fontsize=10,
                 ha="left",
