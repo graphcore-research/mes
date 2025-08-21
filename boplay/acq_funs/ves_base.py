@@ -100,6 +100,7 @@ def ves_base(
     idx_train: np.ndarray,
     lr: float = 1e-2,
     wd: float = 0.,
+    max_iters: int = 200,
 ) -> np.ndarray:
     """
     Compute the acquisition function for the base case.
@@ -184,7 +185,7 @@ def ves_base(
 
     # optimize the parameters
     # params_optimal, _ = optimize_lbfgs(theta=params_initial,loss_fn=loss_fn)
-    params_optimal, _ = optimize_adam(theta=params_initial, loss_fn=loss_fn, lr=lr, wd=wd)
+    params_optimal, _ = optimize_adam(theta=params_initial, loss_fn=loss_fn, lr=lr, wd=wd, max_iters=max_iters)
 
     # (n_x_test, n_yn1):  compute the distro parameters
     distro_params = compute_distro_params(

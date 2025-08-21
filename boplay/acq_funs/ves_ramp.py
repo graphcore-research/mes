@@ -143,6 +143,7 @@ def ves_exponential_ramp(
     idx_train: np.ndarray,
     lr: float = 1e-2,
     wd: float = 0.,
+    max_iters: int = 200,
 ) -> np.ndarray:
     """
     Variational Entropy search with the exponenital ramp to approximate how
@@ -174,4 +175,5 @@ def ves_exponential_ramp(
         idx_train=idx_train,
         lr=lr,
         wd=wd,
+        max_iters=max_iters,
     )
