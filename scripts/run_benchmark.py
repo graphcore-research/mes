@@ -26,7 +26,6 @@ acq_types = [
     "ves_gamma",
     "expected_improvement",
     "random_search",
-    "ves_ramp",
 ]
 kernel_types = ["matern-3/2", "matern-5/2"]
 len_scales = [10, 25]
