@@ -45,14 +45,18 @@ class BayesianOptimization:
         self.y_true_max = float(np.max(self.y_true))
         self.y_noise_std = y_noise_std
 
+
         # algorithm parameters (constants)
         self.kernel = kernel
         self.acq_fun = acq_fun
         self.n_init = n_init
         self.n_final = n_final
         self.seed = seed
-        np.random.seed(self.seed)
         self.verbose = verbose
+
+        # pre-generate a stream of noise values
+        np.random.seed(self.seed)
+        self.y_noise_values = np.random.normal(size=(n_final, 1)) * self.y_noise_std
 
         # algorithm state (mutable)
         self.x_train = None
@@ -132,8 +136,7 @@ class BayesianOptimization:
         idx_init = self._get_initial_points().tolist()
         self.idx_train = idx_init
         self.x_train = self.x_grid[self.idx_train]
-        self.y_train = self.y_true[self.idx_train]
-        self.y_train += np.random.normal(size=self.y_train.shape) * self.y_noise_std
+        self.y_train = self.y_true[self.idx_train] + self.y_noise_values[:len(self.idx_train)]
         self._update_model()
         self.y_max_history.append([len(self.y_train), np.max(self.y_train)])
 
@@ -142,13 +145,13 @@ class BayesianOptimization:
 
             # select the next point
             idx_new = self._select_next_point()
-            self.idx_train.append(idx_new)
             self._update_history()
 
-            x_new = self.x_grid[idx_new]
-            y_new = self.y_true[idx_new] + np.random.normal() * self.y_noise_std
-
             # update the algorithm training data
+            self.idx_train.append(idx_new)
+
+            x_new = self.x_grid[idx_new]
+            y_new = self.y_true[idx_new] + self.y_noise_values[len(self.idx_train)-1]
             self.x_train = np.vstack((self.x_train, x_new))
             self.y_train = np.vstack((self.y_train, y_new))
             self._update_model()
