@@ -3,14 +3,19 @@ import numpy as np
 from .lr_het_base import fit_lr_het_model
 
 
+LR = 3e-2
+WD = 0.0
+MAX_ITERS = 50
+
 
 def fit_lr_1_0(
     *,
     x_data: np.ndarray,
     y_data: np.ndarray,
     x_min: float,
-    lr: float = 1e-2,
-    wd: float = 0.0,
+    lr: float = LR,
+    wd: float = WD,
+    max_iters: int = MAX_ITERS,
     make_heatmap: bool = False,
 ) -> np.ndarray:
     """
@@ -24,6 +29,7 @@ def fit_lr_1_0(
         noise_basis_fun=lambda x: np.zeros_like(x),
         lr=lr,
         wd=wd,
+        max_iters=max_iters,
         make_heatmap=make_heatmap,
     )
 
@@ -33,8 +39,9 @@ def fit_lr_1_1(
     x_data: np.ndarray,
     y_data: np.ndarray,
     x_min: float,
-    lr: float = 1e-2,
-    wd: float = 0.0,
+    lr: float = LR,
+    wd: float = WD,
+    max_iters: int = MAX_ITERS,
     make_heatmap: bool = False,
 ) -> np.ndarray:
     """
@@ -48,6 +55,7 @@ def fit_lr_1_1(
         noise_basis_fun=lambda x: x,
         lr=lr,
         wd=wd,
+        max_iters=max_iters,
         make_heatmap=make_heatmap,
     )
 
@@ -57,8 +65,9 @@ def fit_lr_1_2(
     x_data: np.ndarray,
     y_data: np.ndarray,
     x_min: float,
-    lr: float = 1e-2,
-    wd: float = 0.0,
+    lr: float = LR,
+    wd: float = WD,
+    max_iters: int = MAX_ITERS,
     make_heatmap: bool = False,
 ) -> np.ndarray:
     """
@@ -72,6 +81,7 @@ def fit_lr_1_2(
         noise_basis_fun=lambda x: np.clip(x, a_min=x_min, a_max=None),
         lr=lr,
         wd=wd,
+        max_iters=max_iters,
         make_heatmap=make_heatmap,
     )
 
@@ -81,8 +91,9 @@ def fit_lr_2_0(
     x_data: np.ndarray,
     y_data: np.ndarray,
     x_min: float,
-    lr: float = 1e-2,
-    wd: float = 0.0,
+    lr: float = LR,
+    wd: float = WD,
+    max_iters: int = MAX_ITERS,
     make_heatmap: bool = False,
 ) -> np.ndarray:
     return fit_lr_het_model(
@@ -92,6 +103,7 @@ def fit_lr_2_0(
         noise_basis_fun=lambda x: np.zeros_like(x),
         lr=lr,
         wd=wd,
+        max_iters=max_iters,
         make_heatmap=make_heatmap,
     )
 
@@ -101,8 +113,9 @@ def fit_lr_2_1(
     x_data: np.ndarray,
     y_data: np.ndarray,
     x_min: float,
-    lr: float = 1e-2,
-    wd: float = 0.0,
+    lr: float = LR,
+    wd: float = WD,
+    max_iters: int = MAX_ITERS,
     make_heatmap: bool = False,
 ) -> np.ndarray:
     return fit_lr_het_model(
@@ -112,6 +125,7 @@ def fit_lr_2_1(
         noise_basis_fun=lambda x: x,
         lr=lr,
         wd=wd,
+        max_iters=max_iters,
         make_heatmap=make_heatmap,
     )
 
@@ -121,8 +135,9 @@ def fit_lr_2_2(
     x_data: np.ndarray,
     y_data: np.ndarray,
     x_min: float,
-    lr: float = 1e-2,
-    wd: float = 0.0,
+    lr: float = LR,
+    wd: float = WD,
+    max_iters: int = MAX_ITERS,
     make_heatmap: bool = False,
 ) -> np.ndarray:
     return fit_lr_het_model(
@@ -132,6 +147,7 @@ def fit_lr_2_2(
         noise_basis_fun=lambda x: np.clip(x, a_min=x_min, a_max=None),
         lr=lr,
         wd=wd,
+        max_iters=max_iters,
         make_heatmap=make_heatmap,
     )
 
