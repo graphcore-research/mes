@@ -115,8 +115,12 @@ class BayesianOptimization:
         )
         y_max_var = np.var(np.max(sample_funcs, axis=1))
         y_max_diff = self.y_true_max - np.max(self.y_train)
-        idx_recomend = np.argmax(self.y_mean)
-        y_rec_diff = self.y_true_max - self.y_true[idx_recomend]
+
+        idx_recomend_mean = np.argmax(self.y_mean)
+        idx_recomend_max = np.argmax(self.y_train)
+        y_rec_diff_mean = self.y_true_max - self.y_true[idx_recomend_mean]
+        y_rec_diff_max = self.y_true_max - self.y_true[idx_recomend_max]
+        
         self.state_history.append(
             {
                 "n_train": len(self.y_train),
@@ -127,8 +131,20 @@ class BayesianOptimization:
                 "predict_time": self.predict_time,
                 "y_max_var": y_max_var,
                 "y_max_diff": y_max_diff,
-                "y_rec_diff": y_rec_diff,
+                "y_rec_diff_mean": y_rec_diff_mean,
+                "y_rec_diff_max": y_rec_diff_max,
             }
+        )
+        # keep these for easy access/plotting convergence curves
+        self.y_max_history.append(
+            [
+                len(self.y_train),
+                float(np.max(self.y_train)),
+                float(y_max_diff),
+                float(y_rec_diff_mean),
+                float(y_rec_diff_max),
+                float(y_max_var),
+            ]
         )
 
     def run(self) -> None:
@@ -138,7 +154,6 @@ class BayesianOptimization:
         self.x_train = self.x_grid[self.idx_train]
         self.y_train = self.y_true[self.idx_train] + self.y_noise_values[:len(self.idx_train)]
         self._update_model()
-        self.y_max_history.append([len(self.y_train), np.max(self.y_train)])
 
         for _ in range(self.n_init, self.n_final):
             # fit a model to the points we have so far
@@ -158,7 +173,6 @@ class BayesianOptimization:
 
             n, y_max = len(self.y_train), np.max(self.y_train)
             y_max_diff = self.y_true_max - y_max
-            self.y_max_history.append([len(self.y_train), y_max])
 
             acq_fun_time = round(1e3 * self.acq_fun_time, 5)
             predict_time = round(1e3 * self.predict_time, 5)
