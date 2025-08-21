@@ -3,6 +3,7 @@ import pandas as pd
 from pathlib import Path
 from itertools import product, chain
 from multiprocessing import Pool, cpu_count, RLock, current_process
+import torch.multiprocessing as mp
 from functools import partial
 
 from boplay.acq_funs import ACQ_FUNCS
@@ -107,6 +108,7 @@ def _process_hyperparams(params):
 
 
 if __name__ == "__main__":
+    mp.set_start_method("spawn", force=True)
     param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims))
     n_sweeps = len(param_combinations)
     lock = RLock()
