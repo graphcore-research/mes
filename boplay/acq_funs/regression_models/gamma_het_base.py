@@ -42,6 +42,7 @@ def fit_gamma_het_model(
     k_max: float = 10.0,
     lr: float = 1e-2,
     wd: float = 0.,
+    wd_k: float=10,
     max_iters: int = 200,
     make_heatmap: bool = False,
 ) -> np.ndarray:
@@ -132,8 +133,10 @@ def fit_gamma_het_model(
 
         lhood = gamma_log_likelihood(x=noise_vals, k=k, theta=theta)
 
+        weight_decay = wd_k * (k - 1)**2
+
         # (1, ) <- (n_x, n_points)
-        return -lhood.sum()
+        return -lhood.sum() + weight_decay.sum()
 
     params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd, max_iters=max_iters)
 
