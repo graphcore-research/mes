@@ -49,6 +49,7 @@ def fit_lr_het_model(
     noise_basis_fun: Callable = None,
     lr: float = 1e-2,
     wd: float = 0.,
+    max_iters: int = 200,
     make_heatmap: bool = False,
 ) -> np.ndarray:
     """
@@ -127,7 +128,7 @@ def fit_lr_het_model(
         # (1, ) <- (n_x, n_points)
         return -lhood.sum()
 
-    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd)
+    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd, max_iters=max_iters)
 
     m_trend = params[:, 0, None]
     c_trend = params[:, 1, None]

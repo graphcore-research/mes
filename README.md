@@ -1,5 +1,8 @@
 # Max Value Entropy Search Approximations
 
+Building on this ICML 2025 spotlight paper: [A Unified Framework for Entropy Search and
+Expected Improvement in Bayesian Optimization](https://arxiv.org/pdf/2501.18756)
+
 Collections of toy expertiments for approximating Max Value entropy Search
 
 ![Distribution of Max Values gitven 3 points](scripts/original_data.png)

@@ -17,7 +17,7 @@ class GaussianProcess:
         x_train: np.ndarray,
         y_train: np.ndarray,
         kernel: callable,
-        noise: float = 1e-9,
+        y_noise_std: float = 1e-4,
     ) -> None:
         """Initializes the GP with training data and a kernel.
 
@@ -25,7 +25,7 @@ class GaussianProcess:
             X_train: d-dimensional numpy array of training inputs.
             y_train: 1-dimensional numpy array of training targets.
             kernel: A callable kernel function k(x, x').
-            noise: Gaussian noise level (default is 1e-6).
+            y_noise_std: Gaussian noise level (default is 1e-6).
         """
         x_train = np.asarray(x_train)
         y_train = np.asarray(y_train).reshape(-1, 1)
@@ -37,14 +37,14 @@ class GaussianProcess:
         self.x_train = x_train
         self.y_train = y_train
         self.kernel = kernel
-        self.noise = noise
+        self.y_noise_std = y_noise_std
         self.x_dim = x_train.shape[1]
         self._fit()
 
     def _fit(self):
         """Computes the Cholesky decomposition of the kernel matrix."""
         k = self.kernel(self.x_train, self.x_train)
-        k += self.noise * np.eye(len(self.x_train))
+        k += self.y_noise_std**2 * np.eye(len(self.x_train))
         self.L = np.linalg.cholesky(k)
         self.alpha = np.linalg.solve(
             self.L.T, np.linalg.solve(self.L, self.y_train)
@@ -80,17 +80,17 @@ class GaussianProcess:
         """Draws samples from the posterior at test inputs.
 
         Args:
-            X_test: 1D numpy array of test inputs.
+            x_test: (n_test, x_dim) numpy array of test inputs.
             n_samples: Number of posterior samples to draw.
 
         Returns:
-            Samples: A (n_test, n_samples) array of function samples.
+            Samples: A (n_samples, n_test) array of function samples.
         """
         np.random.seed(seed)
-        mean, cov = self.predict(x_test)
+        mean, cov = self.predict(x_test=x_test)
         
         cov += 1e-8 * np.eye(len(x_test))  # stability
         samples = np.random.multivariate_normal(
-            mean, cov, size=n_samples
-        ).T
+            mean.reshape(-1), cov, size=n_samples
+        )
         return samples

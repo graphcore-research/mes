@@ -89,11 +89,9 @@ def fit_gamma_het_model(
 
     noise_vals = y_pt - x_trend_pt
 
-    # make sure they're all (slightly) positive
-    noise_vals_min = noise_vals.min(axis=1)[0] - 1e-6
-    noise_vals_min = noise_vals_min.clip(min=None, max=0)
-
-    noise_vals = noise_vals - noise_vals_min[:, None]
+    # push all the values up to be positive
+    noise_vals_min = noise_vals.min(axis=1).values[:, None]
+    noise_vals = noise_vals - noise_vals_min + 1e-6
 
     # (n_x, 4): initialized constant mean and constant std
     noise_mean_emp = y_pt.mean(axis=1)[:, None]
