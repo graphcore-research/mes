@@ -40,10 +40,11 @@ def sample_yn1_ymax(
     *,
     y_mean: np.ndarray,
     y_cov: np.ndarray,
+    y_noise_std: float,
     n_yn1: int=10,
     n_ymax: int=30,
     batch_size: int=1e9,
-    noise: float=1e-9,
+    noise_jitter: float=1e-9,
 ) -> np.ndarray:
     """
     Given the mean and covariance of all the function values at all the x-locations,
@@ -75,10 +76,11 @@ def sample_yn1_ymax(
     Args:
         y_mean: np.ndarray, shape (n_x, 1)
         y_cov: np.ndarray, shape (n_x, n_x)
+        y_noise_std: float, noise standard deviation of y values for the objective function.
         n_yn1: int, number of y_n1 values to sample for each x-location
         n_ymax: int, number of functions to sample from the model
         batch_size: int, number of x-locations to process in each batch
-        noise: float, noise to add to the covariance matrix
+        noise_jitter: float, noise to add to the covariance matrix
 
     Returns:
         y_n1_output: np.ndarray, shape (n_x, n_yn1)
@@ -88,11 +90,12 @@ def sample_yn1_ymax(
     y_mean = y_mean.reshape(-1, 1)
     n_x = y_mean.shape[0]       # total number of x -locations
     bs = min(batch_size, n_x)   # batch size
+    y_noise_var = y_noise_std**2
 
     batch_idx_subsets = np.array_split(np.arange(n_x), n_x // bs)
      
     # (n_x, n_x) square matrices
-    y_cov += noise * np.eye(y_cov.shape[0])
+    y_cov += noise_jitter * np.eye(y_cov.shape[0])
     chol_k = np.linalg.cholesky(y_cov)
     y_sd = np.sqrt(np.diag(y_cov))[:, None]
 
@@ -113,11 +116,11 @@ def sample_yn1_ymax(
 
         # generate y_{n+1} values for each x in this batch
         y_mean_b = y_mean[batch_idx, :]
-        y_sd_b = y_sd[batch_idx, :]
+        y_sd_b = y_sd[batch_idx, :] + y_noise_std
         y_n1_b = y_mean_b + y_sd_b * z_yn1  # (bs, n_yn1)
 
         # (bs, n_x) each row is the delta to adjust a sample fun for one x in batch
-        fn_delta = y_cov[batch_idx, :] / np.diag(y_cov)[batch_idx, None]
+        fn_delta = y_cov[batch_idx, :] / (np.diag(y_cov)[batch_idx, None] + y_noise_var)
 
         # (bs, n_ymax), get the y-values from the sample funs at x locs in this batch
         y_funcs_bx = y_funcs[:, batch_idx].T

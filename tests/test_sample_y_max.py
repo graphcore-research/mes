@@ -10,7 +10,7 @@ def test_sampling_y_max():
     # make some fake data
     x_train = np.linspace(0, 100, 6).reshape(-1, 1)
     y_train = np.sin(2 * np.pi * x_train / 100).reshape(-1, 1)
-    y_best = float(max(y_train))
+    y_best = float(y_train.max())
 
     # Define a GP model with an SE kernel
     kernel = lambda x1, x2: KERNELS["se"](x1, x2, len_scale=10.0, sigma_f=1.0)
@@ -31,6 +31,7 @@ def test_sampling_y_max():
         n_yn1=n_yn1,
         n_ymax=n_ymax,
         batch_size=n_x_test,
+        y_noise_std=0.0,
     )
 
     # ensure all tensors have the correct shape

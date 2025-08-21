@@ -38,6 +38,7 @@ class TestAcqFuns(unittest.TestCase):
         self.y_mean = y_mean
         self.y_cov = y_cov
         self.y_best = y_best
+        self.y_noise_std = 0.2
         self.idx_train = idx_train
 
     def _validate_acq_funs(self, acq_fun_name: str, acq_fun: Callable) -> None:
@@ -51,6 +52,7 @@ class TestAcqFuns(unittest.TestCase):
             y_mean=self.y_mean,
             y_cov=self.y_cov,
             y_best=self.y_best,
+            y_noise_std=self.y_noise_std,
             idx_train=self.idx_train,
         )
 

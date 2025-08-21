@@ -85,6 +85,7 @@ def ves_base(
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     y_best: float,
+    y_noise_std: float,
     n_yn1: int=10,
     n_ymax: int=30,
     batch_size: int=1e9,
@@ -122,6 +123,7 @@ def ves_base(
     y_n1_samples, _, y_max_samples, _ = sample_yn1_ymax(
         y_mean=y_mean,
         y_cov=y_cov,
+        y_noise_std=y_noise_std,
         n_yn1=n_yn1,
         n_ymax=n_ymax,
         batch_size=batch_size,
