@@ -31,6 +31,7 @@ class BayesianOptimization:
         y_true: np.ndarray,
         kernel: callable,
         acq_fun: callable,
+        y_noise_std: float = 0.0,
         n_init:int=4,
         n_final:int=100,
         seed:int=0,
@@ -42,6 +43,8 @@ class BayesianOptimization:
         self.x_grid = np.asarray(x_grid)
         self.y_true = np.asarray(y_true).reshape(-1, 1)
         self.y_true_max = float(np.max(self.y_true))
+        self.y_noise_std = y_noise_std
+
 
         # algorithm parameters (constants)
         self.kernel = kernel
@@ -49,8 +52,11 @@ class BayesianOptimization:
         self.n_init = n_init
         self.n_final = n_final
         self.seed = seed
-        np.random.seed(self.seed)
         self.verbose = verbose
+
+        # pre-generate a stream of noise values
+        np.random.seed(self.seed)
+        self.y_noise_values = np.random.normal(size=(n_final, 1)) * self.y_noise_std
 
         # algorithm state (mutable)
         self.x_train = None
@@ -69,6 +75,7 @@ class BayesianOptimization:
             x_train=self.x_train,
             y_train=self.y_train,
             kernel=self.kernel,
+            y_noise_std=self.y_noise_std,
         )
         start_time = time.time()
         self.y_mean, self.y_cov = self.model.predict(x_test=self.x_grid)
@@ -102,6 +109,18 @@ class BayesianOptimization:
         return np.random.choice(self.x_grid.shape[0], size=self.n_init, replace=False)
 
     def _update_history(self) -> None:
+        sample_funcs = self.model.sample_posterior(
+            x_test=self.x_grid,
+            n_samples=1000,
+        )
+        y_max_var = np.var(np.max(sample_funcs, axis=1))
+        y_max_diff = self.y_true_max - np.max(self.y_train)
+
+        idx_recomend_mean = np.argmax(self.y_mean)
+        idx_recomend_max = np.argmax(self.y_train)
+        y_rec_diff_mean = self.y_true_max - self.y_true[idx_recomend_mean]
+        y_rec_diff_max = self.y_true_max - self.y_true[idx_recomend_max]
+        
         self.state_history.append(
             {
                 "n_train": len(self.y_train),
@@ -110,7 +129,22 @@ class BayesianOptimization:
                 "acq_fun_vals": self.acq_fun_vals,
                 "acq_fun_time": self.acq_fun_time,
                 "predict_time": self.predict_time,
+                "y_max_var": y_max_var,
+                "y_max_diff": y_max_diff,
+                "y_rec_diff_mean": y_rec_diff_mean,
+                "y_rec_diff_max": y_rec_diff_max,
             }
+        )
+        # keep these for easy access/plotting convergence curves
+        self.y_max_history.append(
+            [
+                len(self.y_train),
+                float(np.max(self.y_train)),
+                float(y_max_diff),
+                float(y_rec_diff_mean),
+                float(y_rec_diff_max),
+                float(y_max_var),
+            ]
         )
 
     def run(self) -> None:
@@ -118,30 +152,27 @@ class BayesianOptimization:
         idx_init = self._get_initial_points().tolist()
         self.idx_train = idx_init
         self.x_train = self.x_grid[self.idx_train]
-        self.y_train = self.y_true[self.idx_train]
+        self.y_train = self.y_true[self.idx_train] + self.y_noise_values[:len(self.idx_train)]
         self._update_model()
-
-        self.y_max_history.append([len(self.y_train), np.max(self.y_train)])
 
         for _ in range(self.n_init, self.n_final):
             # fit a model to the points we have so far
 
             # select the next point
             idx_new = self._select_next_point()
-            self.idx_train.append(idx_new)
             self._update_history()
 
-            x_new = self.x_grid[idx_new]
-            y_new = self.y_true[idx_new]
-
             # update the algorithm training data
+            self.idx_train.append(idx_new)
+
+            x_new = self.x_grid[idx_new]
+            y_new = self.y_true[idx_new] + self.y_noise_values[len(self.idx_train)-1]
             self.x_train = np.vstack((self.x_train, x_new))
             self.y_train = np.vstack((self.y_train, y_new))
             self._update_model()
 
             n, y_max = len(self.y_train), np.max(self.y_train)
             y_max_diff = self.y_true_max - y_max
-            self.y_max_history.append([len(self.y_train), y_max])
 
             acq_fun_time = round(1e3 * self.acq_fun_time, 5)
             predict_time = round(1e3 * self.predict_time, 5)
@@ -154,3 +185,5 @@ class BayesianOptimization:
                     f"acq_fun_time: {acq_fun_time} ms, "
                     f"predict_time: {predict_time} ms, "
                 )[:-2])
+
+        self._update_history()
