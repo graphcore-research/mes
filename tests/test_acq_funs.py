@@ -61,6 +61,22 @@ class TestAcqFuns(unittest.TestCase):
         )
         assert np.isnan(acq_fun_vals).sum() == 0, f"{acq_fun_name}: nans in acq fun values"
         assert np.isinf(acq_fun_vals).sum() == 0, f"{acq_fun_name}: infs in acq fun values"
+
+        # test with no mask
+        acq_fun_vals = acq_fun(
+            x_grid=self.x_grid,
+            y_mean=self.y_mean,
+            y_cov=self.y_cov,
+            y_best=self.y_best,
+            y_noise_std=self.y_noise_std,
+            idx_train= [],
+        )
+
+        assert acq_fun_vals.shape == (self.n_x,), (
+            f"{acq_fun_name}: shape mismatch {acq_fun_vals.shape} != ({self.n_x},)"
+        )
+        assert np.isnan(acq_fun_vals).sum() == 0, f"{acq_fun_name}: nans in acq fun values"
+        assert np.isinf(acq_fun_vals).sum() == 0, f"{acq_fun_name}: infs in acq fun values"
     
     @classmethod
     def build_acq_fun_tests(cls):

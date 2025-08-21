@@ -124,8 +124,8 @@ class BayesianOptimization:
 
         idx_recomend_mean = np.argmax(self.y_mean)
         idx_recomend_max = np.argmax(self.y_train)
-        y_rec_diff_mean = self.y_true_max - self.y_true[idx_recomend_mean]
-        y_rec_diff_max = self.y_true_max - self.y_true[idx_recomend_max]
+        y_rec_diff_mean = self.y_true_max - self.y_true[idx_recomend_mean][0]
+        y_rec_diff_max = self.y_true_max - self.y_true[idx_recomend_max][0]
         
         self.state_history.append(
             {
