@@ -1,15 +1,22 @@
 # %%
+# fmt: off
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import scienceplots
 
-plt.style.use(["science"])
+plt.style.use(["science", "grid"])
 
 SAVE_DIR = Path().cwd()  # mes/nbs
 DATA_DIR = Path().cwd().parent / "data"  # mes/data
 assert DATA_DIR.exists(), f"{DATA_DIR} does not exist"
+
+# %%
+# Define these as use fuul
+n_dim = 4
+acq_func = "ves_gamma"
+kt = "matern-3/2"
 
 # %%
 # Split into baseline vs sweep acquisition functions
@@ -59,8 +66,12 @@ assert _nuniq.eq(1).all(), (
 )
 
 # Ok great, so let's drop our superfulous lr and wd.
-# base_df is nice and simple!
+# base_df is nice and simple! I've replaced the names since it'll be easier later
 base_df = base_df.drop(columns=["lr", "wd"]).drop_duplicates()
+base_df.acq_func = base_df.acq_func.replace({
+    "expected_improvement": "EI",
+    "random_search": "RS"
+})
 base_df
 
 # %%
@@ -69,107 +80,95 @@ sweep_acq = ["ves_gamma", "ves_mc_gamma"]
 sweep_df = regret_df.query("acq_func in @sweep_acq").copy()
 sweep_df.query('kernel_type == "matern-5/2" and n_dim == 4').head()
 # %%
+# Great, so for each aquisition function x n_dim we want to make a plot:
+sdf = sweep_df.query("acq_func == @acq_func and n_dim == @n_dim").copy()
+# And for each kernel type a subplot
+kdf = sdf.query("kernel_type == @kt").copy()
+kdf.head()
+# %%
+# Now some pivot magic to make a 2D matrix of wd x lr
+pivot = kdf.pivot(index="wd", columns="lr", values="regret")
+assert not pivot.isna().any().any(), "Missing points in the lr-wd grid"
+pivot
+# %%
+# It'd be cool if we could just plug this straight in to matplotlib, but we need a 1d XY values for each point and a 2d matrix of values.
 
-# Contour Plot Spec (for future self)
-# - Figures: one per (acq_func, n_dim), excluding baselines.
-# - Subplots: one per kernel_type within the figure.
-# - Axes: X=lr, Y=wd; label axes accordingly. lr may use log scale.
-# - Surface: contour of regret over the lr–wd grid for that kernel.
-# - Colorbars: one per subplot, labeled 'regret'; overlay baseline methods as
-#   horizontal lines with labels on the colorbar.
-# - Color scale: DO NOT share vmin/vmax across subplots; each subplot sets its
-#   own color limits based on its data.
-# - Data completeness: require a full lr–wd grid per subplot; raise an error if
-#   any required grid points are missing (no silent interpolation/filling).
-# - Highlights: mark the best (lowest regret) grid point on each subplot.
-# - Titles: subplot title = kernel_type; figure suptitle = "{acq_func} | n_dim={n_dim}".
-# - Filters: apply fixed params consistently (e.g., len_scale, max_iters) across plots.
-# - Ordering: keep a consistent kernel_type order and axis tick order across figures.
-# - Input: use df (averaged over run_id) with columns: acq_func, kernel_type,
-#   n_dim, lr, wd, regret (plus fixed params).
+def _plot_single(kdf, ax, title):
+    pivot = kdf.pivot(index="wd", columns="lr", values="regret")
+    assert not pivot.isna().any().any(), "Missing points in the lr-wd grid"
+
+    X = pivot.columns.values # lr
+    Y = pivot.index.values   # wd
+    Z = pivot.values         # regret
+    assert Z.shape == (Y.shape + X.shape), f"Shape mismatch: {Y.shape + X.shape=} != {Z.shape=}"
+
+    # Plot the contour and make a colorbar
+    cf = ax.contourf(X, Y, Z)
+    cbar = plt.colorbar(cf, ax=ax, pad=0.02, fraction=0.08)
+    cbar.set_label("Regret")
+
+    # Matplotlib
+    ax.set_xscale("log")
+    ax.set_xlabel("Learning Rate")
+    ax.set_ylabel("Weight Decay")
+    ax.set_yscale("log") # breaks for some reason
+    ax.grid(True, alpha=0.3)
+    ax.tick_params(axis="x", pad=5)
+    ax.tick_params(axis="y", pad=5)
+    ax.set_title(title)
+
+    # Get best point
+    _min_idx_1d, min_val = Z.argmin(), Z.min()
+    _y_idx, _x_idx = np.unravel_index(_min_idx_1d, Z.shape) # for some reason it gives the flattened argmin
+    ax.plot(X[_x_idx], Y[_y_idx], "wo", ms=10, mec="k")
+
+    return cbar, min_val
+
+n_plots = 1
+fig, axs = plt.subplots(1, n_plots, figsize=(n_plots * 5, 4))
+fig.suptitle(f"{acq_func.replace('_', ' ').upper()} -- {n_dim}D", fontsize=14)
+
+ax = axs # coz there's only 1
+cbar, min_val = _plot_single(kdf, ax, title=f"{kt.upper().replace("-", " ")}")
+print(min_val)
+plt.show()
+# %%
+# Ok awesome, now let's have a look at those baselines. As a reminder:
+base_df
 
 # %%
+# So we want to find the ones for specific subplot:
 
-# Minimal implementation: one figure per (acq_func, n_dim) with subplots per kernel.
-# - Per-subplot color scale (no sharing)
-# - Require complete lr–wd grid per kernel (raise if missing)
-# - Mark best (lowest) regret per subplot
+def _add_baseline_annotations(
+    cbar,
+    baseline_values: dict[str, int], # {"EI": 0.2, "RS": 0.4}
+    fontsize=8,  # smaller text
+    x_offset=1.5,  # tighter to the bar
+    lw=1,  # thinner arrows
+    box_alpha=0.8,  # lighter box
+):
+    for label, bv in baseline_values.items():
+        # clip to colorbar range for positioning
+        clipped_value = np.clip(bv, cbar.vmin, cbar.vmax)
+        arrow_y, coords_type = clipped_value, "data"
 
-def _grid_from_kernel_df(kdf: pd.DataFrame):
-    """Return sorted lr, wd and a dense regret matrix; raise if grid incomplete."""
-    lr_vals = np.sort(kdf["lr"].unique())
-    wd_vals = np.sort(kdf["wd"].unique())
-
-    # Build pivot; ensure full grid
-    pivot = kdf.pivot(index="wd", columns="lr", values="regret").reindex(
-        index=wd_vals, columns=lr_vals
-    )
-    if pivot.isna().any().any():
-        missing = np.argwhere(np.asarray(pivot.isna()))
-        raise ValueError(
-            f"Incomplete lr–wd grid for kernel {kdf['kernel_type'].iloc[0]}: found NaNs"
+        cbar.ax.annotate(
+            f"{label}: {bv:.2f}",
+            xy=(1.0, arrow_y),
+            xycoords=("axes fraction", coords_type),
+            xytext=(x_offset, arrow_y),
+            textcoords=("axes fraction", coords_type),
+            arrowprops=dict(arrowstyle="->", color="black", lw=lw),
+            fontsize=fontsize,
+            ha="left",
+            va="center",
+            bbox=dict(boxstyle="round,pad=0.25", facecolor="white", alpha=box_alpha),
         )
-    Z = pivot.values.astype(float)
-    return lr_vals, wd_vals, Z
 
+kdf_base = base_df.query("kernel_type == @kt and n_dim == @n_dim").copy()
+kdf_vals: dict[str, int] = {row.acq_func: row.regret for row in kdf_base.itertuples()} # type: ignore
+_add_baseline_annotations(cbar, kdf_vals)
+# plt.show()
+fig
 
-def plot_contours_minimal(sweep_df: pd.DataFrame, acq_func: str, n_dim: int):
-    """Plot minimal contour figures for a single (acq_func, n_dim).
-
-    - One subplot per kernel_type present in sweep_df for this acq/dim.
-    - X axis is lr (log scale), Y axis is wd (linear here for simplicity).
-    - Individual color scales per subplot, with a colorbar each.
-    - Best (min regret) point marked.
-    """
-    sdf = sweep_df.query("acq_func == @acq_func and n_dim == @n_dim").copy()
-    if sdf.empty:
-        raise ValueError(f"No sweep data for acq_func={acq_func}, n_dim={n_dim}")
-
-    kernel_types = sorted(sdf["kernel_type"].unique())
-    n_plots = len(kernel_types)
-    fig, axes = plt.subplots(1, n_plots, figsize=(5 * n_plots, 4), sharey=True)
-    if n_plots == 1:
-        axes = [axes]
-
-    for i, (kt, ax) in enumerate(zip(kernel_types, axes)):
-        kdf = sdf.query("kernel_type == @kt")
-        lr_vals, wd_vals, Z = _grid_from_kernel_df(kdf)
-
-        # Per-subplot color limits
-        vmin, vmax = float(Z.min()), float(Z.max())
-        if vmax - vmin < 1e-9:
-            vmax = vmin + 1e-9
-
-        LR, WD = np.meshgrid(lr_vals, wd_vals)
-        cf = ax.contourf(
-            LR, WD, Z, levels=16, vmin=vmin, vmax=vmax, cmap="viridis"
-        )
-        cbar = plt.colorbar(cf, ax=ax, pad=0.02, fraction=0.08)
-        cbar.set_label("regret")
-
-        # Axes formatting
-        ax.set_title(kt)
-        ax.set_xlabel("lr")
-        if i == 0:
-            ax.set_ylabel("wd")
-        ax.set_xscale("log")
-        ax.grid(True, alpha=0.3)
-
-        # Mark best point
-        min_idx = np.unravel_index(np.argmin(Z), Z.shape)
-        ax.plot(lr_vals[min_idx[1]], wd_vals[min_idx[0]], "wo", ms=5, mec="k")
-
-    pretty = acq_func.replace("_", " ").title()
-    fig.suptitle(f"{pretty} | n_dim={n_dim}")
-    out = SAVE_DIR / f"contours_min_{acq_func}_{n_dim}d.png"
-    fig.tight_layout()
-    fig.savefig(out, dpi=200, bbox_inches="tight")
-    plt.show()
-    plt.close(fig)
-
-
-# Example minimal call (adjust if needed)
-try:
-    plot_contours_minimal(sweep_df, acq_func="ves_gamma", n_dim=4)
-except Exception as e:
-    print("Skipping minimal contour plot:", e)
+# %%
