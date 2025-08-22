@@ -90,7 +90,7 @@ def _process_hyperparams(params):
     y_true_max = np.max(benchmark.y, axis=1)
     rows = []
     for i, bo in enumerate(bos):
-        steps, y_max_history = zip(*bo.y_max_history)
+        steps, y_max_history, y_max_diff, y_rec_diff_mean, y_rec_diff_max, y_max_var = zip(*bo.y_max_history)
         final_y_max = y_max_history[-1]
         row = {
             "acq_func": acq_type,
@@ -101,6 +101,10 @@ def _process_hyperparams(params):
             "y_true_max": y_true_max[i],  # (B,)
             "final_y_max": final_y_max,  # (B,)
             "y_max_history": y_max_history,  # (B, T)
+            "y_max_diff": y_max_diff,  # (B, T)
+            "y_rec_diff_mean": y_rec_diff_mean,  # (B, T)
+            "y_rec_diff_max": y_rec_diff_max,  # (B, T)
+            "y_max_var": y_max_var,  # (B, T)
             "steps": steps,  # (B, T)
         }
         rows.append(row)
