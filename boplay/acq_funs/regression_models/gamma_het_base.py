@@ -25,9 +25,11 @@ def gamma_log_likelihood(*, x: pt.Tensor, k: pt.Tensor, theta: pt.Tensor) -> pt.
         log_likelihood: pt.Tensor, shape (n_x, n_points)
     """
     assert len(x.shape) == 2, "x must be a 2D tensor"
-    # k = k[:, None]÷
-    # theta = theta[:, None]
     log_likelihood = (k - 1) * pt.log(x) - x / theta - k * pt.log(theta) - pt.lgamma(k)
+
+    # HACKY!
+    # negative x values will return nan log_likelihood, so set to 0
+    log_likelihood = pt.nan_to_num(log_likelihood, nan=0)
     return log_likelihood
 
 
@@ -42,7 +44,7 @@ def fit_gamma_het_model(
     k_max: float = 10.0,
     lr: float = 1e-2,
     wd: float = 0.,
-    wd_k: float=10,
+    wd_k: float=4,
     max_iters: int = 200,
     make_heatmap: bool = False,
 ) -> np.ndarray:
@@ -90,10 +92,6 @@ def fit_gamma_het_model(
 
     noise_vals = y_pt - x_trend_pt
 
-    # push all the values up to be positive
-    noise_vals_min = noise_vals.min(axis=1).values[:, None]
-    noise_vals = noise_vals - noise_vals_min + 1e-6
-
     # (n_x, 4): initialized constant mean and constant std
     noise_mean_emp = y_pt.mean(axis=1)[:, None]
     params = pt.nn.Parameter(
@@ -119,12 +117,13 @@ def fit_gamma_het_model(
             loss: float, the loss
         """
 
-        # (n_x, n_points)
+        # (n_x, 1), (n_x, 1), (n_x, 1), (n_x, 1)
         m_k = params[:, 0, None]
         c_k = params[:, 1, None]
         m_theta = params[:, 2, None]
         c_theta = params[:, 3, None]
-
+        
+        # (n_x, n_points) <- (n_x, 1) * (n_x, n_points) + (n_x, 1)
         k = m_k * k_basis_pt + c_k
         theta = m_theta * beta_basis_pt + c_theta
 
