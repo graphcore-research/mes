@@ -171,6 +171,6 @@ def fit_lr_het_model(
 
             # and then come back to numpy
             gauss_lhood = gaussian_log_likelihood(x=y, mean=y_trend, log_std=noise_log_sdev)
-            return gauss_lhood.detach().cpu().numpy()
+            return gauss_lhood.detach().cpu().numpy(), params
         
         return make_heatmap

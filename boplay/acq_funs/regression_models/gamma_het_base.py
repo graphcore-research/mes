@@ -199,6 +199,6 @@ def fit_gamma_het_model(
             # Gamma distribution only generates positive values
             gamma_lhood_np[mask] = -np.inf
 
-            return gamma_lhood_np
+            return gamma_lhood_np, params
         
         return make_heatmap
