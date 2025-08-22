@@ -97,7 +97,10 @@ def sample_yn1_ymax(
     # (n_x, n_x) square matrices
     y_cov += noise_jitter * np.eye(y_cov.shape[0])
     chol_k = np.linalg.cholesky(y_cov)
-    y_sd = np.sqrt(np.diag(y_cov))[:, None]
+
+    f_var = np.diag(y_cov)[:, None]
+    y_n1_var = f_var + y_noise_var
+    y_n1_sd = np.sqrt(y_n1_var)
 
     # (n_ymax, n_x) matrix, each row is one vector of y-values for the n_x
     # locations generated from the model using current data
@@ -116,11 +119,11 @@ def sample_yn1_ymax(
 
         # generate y_{n+1} values for each x in this batch
         y_mean_b = y_mean[batch_idx, :]
-        y_sd_b = y_sd[batch_idx, :] + y_noise_std
+        y_sd_b = y_n1_sd[batch_idx, :]
         y_n1_b = y_mean_b + y_sd_b * z_yn1  # (bs, n_yn1)
 
         # (bs, n_x) each row is the delta to adjust a sample fun for one x in batch
-        fn_delta = y_cov[batch_idx, :] / (np.diag(y_cov)[batch_idx, None] + y_noise_var)
+        fn_delta = y_cov[batch_idx, :] / y_n1_var[batch_idx, :]
 
         # (bs, n_ymax), get the y-values from the sample funs at x locs in this batch
         y_funcs_bx = y_funcs[:, batch_idx].T
