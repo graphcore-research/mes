@@ -106,6 +106,7 @@ def sample_yn1_ymax(
     # locations generated from the model using current data
     z_ymax = np.random.normal(size=(n_ymax, y_mean.shape[0]))
     y_funcs = y_mean.T + z_ymax @ chol_k.T  # (n_ymax, n_x)
+    y_n_funcs = y_funcs + y_noise_std * np.random.normal(size=(y_funcs.shape))
 
     # (n_yn1,) vector of z-scores for the y_n1 values to be computed later
     z_yn1 = gaussian_bin_centers(n_yn1).reshape(1, n_yn1)
@@ -126,7 +127,8 @@ def sample_yn1_ymax(
         fn_delta = y_cov[batch_idx, :] / y_n1_var[batch_idx, :]
 
         # (bs, n_ymax), get the y-values from the sample funs at x locs in this batch
-        y_funcs_bx = y_funcs[:, batch_idx].T
+        # y_funcs_bx = y_funcs[:, batch_idx].T
+        y_funcs_bx = y_n_funcs[:, batch_idx].T
 
         # (bs, n_yn1, n_ymax) <- (bs, n_yn1, 1) - (bs, 1, n_ymax)
         # for each x in batch, get diff between
