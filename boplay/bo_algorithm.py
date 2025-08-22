@@ -89,11 +89,17 @@ class BayesianOptimization:
             x_grid=self.x_grid,
             y_mean=self.y_mean,
             y_cov=self.y_cov,
+            y_noise_std=self.y_noise_std,
             y_best=self.y_best,
-            idx_train=self.idx_train,
+            idx_train= [] if self.y_noise_std > 1e-3 else self.idx_train,
         )
         self.acq_fun_time = time.time() - start_time
 
+        # if there is noise in the y-values, we dont need to mask off old points, we 
+        # can re-visit old points.
+        if self.y_noise_std > 1e-3:
+            return np.argmax(self.acq_fun_vals)
+        
         # set the acq fun vals for the points we have already evaluated to -inf
         acq_fun_vals_masked = self.acq_fun_vals.copy()
         for idx in self.idx_train:
@@ -118,14 +124,14 @@ class BayesianOptimization:
 
         idx_recomend_mean = np.argmax(self.y_mean)
         idx_recomend_max = np.argmax(self.y_train)
-        y_rec_diff_mean = self.y_true_max - self.y_true[idx_recomend_mean]
-        y_rec_diff_max = self.y_true_max - self.y_true[idx_recomend_max]
+        y_rec_diff_mean = self.y_true_max - self.y_true[idx_recomend_mean][0]
+        y_rec_diff_max = self.y_true_max - self.y_true[idx_recomend_max][0]
         
         self.state_history.append(
             {
                 "n_train": len(self.y_train),
                 "y_mean": self.y_mean,
-                "y_sd": np.sqrt(np.diag(self.y_cov)),
+                "y_sd": np.sqrt(np.clip(np.diag(self.y_cov), 1e-6, None)),
                 "acq_fun_vals": self.acq_fun_vals,
                 "acq_fun_time": self.acq_fun_time,
                 "predict_time": self.predict_time,

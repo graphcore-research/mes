@@ -4,7 +4,34 @@ from boplay.acq_funs.mes_utils import sample_yn1_ymax, reconstruct_full_vector
 from boplay.acq_funs.gamma_distribution import estimate_gamma_params, gamma_log_likelihood
 
 
-def ves_mc_gamma(
+def gaussian_log_likelihood(
+    *,
+    x: np.ndarray,
+    mu: np.ndarray,
+    var: np.ndarray,
+) -> np.ndarray:
+    """
+    Compute the log likelihood of a Gaussian distribution.
+    Args:
+        x: np.ndarray, shape (n_x, n_points)
+        mu: np.ndarray, shape (n_x,)
+        var: np.ndarray, shape (n_x,)
+
+    Returns:
+        np.ndarray, shape (n_x, n_points)
+    """
+    mu = mu.reshape(-1, 1)
+    var = var.reshape(-1, 1)
+
+    assert x.shape[0] == mu.shape[0] == var.shape[0], (
+        f"x.shape: {x.shape}, mu.shape: {mu.shape}, var.shape: {var.shape}"
+    )
+
+
+    return -0.5 * np.log(2 * np.pi * var) - 0.5 * (x - mu)**2 / var
+
+
+def ves_mc_gaussian(
     *,
     x_grid: np.ndarray,
     y_mean: np.ndarray,
@@ -20,7 +47,7 @@ def ves_mc_gamma(
 ) -> np.ndarray:
     """
     Cheap Variational Entropy Search acquisition function.
-    Compute log likelihoods by Monte-carlo using a Gamma distribution
+    Compute log likelihoods by Monte-carlo using a Gaussian distribution
     for each y_n1 value within each x location.
 
     Args:
@@ -38,6 +65,7 @@ def ves_mc_gamma(
         np.ndarray, shape (n_x,)
     """
     idx_test = np.setdiff1d(np.arange(y_mean.shape[0]), idx_train)
+    n_x = len(idx_test)
 
     # only compute acquisition funciotn values for the unused points
     y_mean = y_mean[idx_test]
@@ -52,27 +80,14 @@ def ves_mc_gamma(
         batch_size=batch_size,
     )
 
-    n_x = len(idx_test)
+    # (n_x * n_yn1, n_ymax), (n_x * n_yn1, 1)
+    y_max_samples = y_max_samples.reshape(n_x * n_yn1, n_ymax)
+    means = y_max_samples.mean(axis=1)[:, None]  # (n_x * n_yn1, 1)
+    vars = y_max_samples.var(axis=1)[:, None]  # (n_x * n_yn1, 1)
 
-    # (n_x, n_yn1)
-    y_best_n1 = np.clip(y_n1_samples, min=y_best)
+    # (n_x * n_yn1, n_ymax)
+    log_likelihood = gaussian_log_likelihood(x=y_max_samples, mu=means, var=vars)
 
-    # (n_x, n_yn1, n_ymax)
-    y_max_shifted = y_max_samples - y_best_n1[:, :, None]
-
-    # make sure they aren't exactly zero
-    y_max_shifted = np.clip(y_max_shifted, min=1e-8)
-
-    # (n_x * n_yn1, n_ymax) flatten so each row is samples from one distribution
-    y_max_shifted = y_max_shifted.reshape(n_x * n_yn1, n_ymax)
-
-    # (n_x * n_yn1, ), (n_x * n_yn1, )
-    k, theta = estimate_gamma_params(x=y_max_shifted, lr=lr, wd=wd)
-
-    # (n_x * n_yn1, n_ymax): compute likelihood for each data y_max
-    log_likelihood = gamma_log_likelihood(x=y_max_shifted, k=k, theta=theta)
-
-    # (n_x, n_yn1 * n_ymax)
     log_likelihood = log_likelihood.reshape(n_x, n_yn1 * n_ymax)
 
     # (n_x,): mean over all (y_n1, y_max) samples within each of the n_x locations.
@@ -82,7 +97,7 @@ def ves_mc_gamma(
         acq_fun_vals_idx_test=acq_fun_vals,
         idx_test=idx_test,
         n_x=x_grid.shape[0],
-    )
+    ) 
 
     return acq_fun_vals
 

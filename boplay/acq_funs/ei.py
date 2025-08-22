@@ -26,7 +26,7 @@ def expected_improvement(
     """
     y_mean = y_mean.reshape(-1)
 
-    sdev = np.sqrt(np.diag(y_cov))
+    sdev = np.sqrt(np.clip(np.diag(y_cov), 1e-6, None))
     z = (y_mean - y_best) / sdev
     ei_vals = (y_mean - y_best) * norm.cdf(z) + sdev * norm.pdf(z)
 
