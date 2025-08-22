@@ -21,7 +21,7 @@ kt = "matern-3/2"
 # %%
 # Split into baseline vs sweep acquisition functions
 
-df = pd.read_json(DATA_DIR / "benchmark_df_sweep_3.json")
+df = pd.read_json(DATA_DIR / "benchmark_df.json")
 df["regret"] = df.apply(
     lambda x: x["y_true_max"] - x["final_y_max"], axis=1
 )
@@ -29,20 +29,21 @@ df = df.drop(columns=["steps", "y_max_history", "y_true_max", "final_y_max", "ma
 df.query('kernel_type == "matern-5/2" and n_dim == 4 and wd == 0').head()
 
 # %%
-
+cols2group = [c for c in df.columns if c not in {"run_id", "regret"}]
 # Check every config has the same number of runs
-group_cols = [c for c in df.columns if c not in ["run_id", "regret"]]
 expected = df["run_id"].nunique()
-n_runs = df.groupby(group_cols)["run_id"].nunique()
+n_runs = df.groupby(cols2group)["run_id"].nunique()
 assert n_runs.eq(expected).all(), (
     f"Configs with != {expected} runs:\n{n_runs[n_runs != expected]}"
 )
+group_cols = [c for c in df.columns if c not in ["run_id", "regret"]]
 
+mean_df = df.groupby(cols2group).agg('mean', 'count').drop(columns="run_id")
+mean_df
+# %%
 regret_df = (
-    df.assign(regret=df.groupby(group_cols)["regret"].transform("mean"))
-    .drop(columns="run_id")
-    .drop_duplicates(subset=group_cols)
-    .reset_index(drop=True)
+    mean_df.assign(regret=mean_df.groupby(group_cols)["regret"].transform("mean"))
+    .reset_index()
 )
 
 
@@ -111,7 +112,7 @@ def _plot_single(kdf, ax, title):
     ax.set_xscale("log")
     ax.set_xlabel("Learning Rate")
     ax.set_ylabel("Weight Decay")
-    ax.set_yscale("log") # breaks for some reason
+    # ax.set_yscale("log") # breaks for some reason
     ax.grid(True, alpha=0.3)
     ax.tick_params(axis="x", pad=5)
     ax.tick_params(axis="y", pad=5)
@@ -134,7 +135,7 @@ print(min_val)
 plt.show()
 # %%
 # Ok awesome, now let's have a look at those baselines. As a reminder:
-base_df
+print(base_df)
 
 # %%
 # So we want to find the ones for specific subplot:
