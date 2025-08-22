@@ -127,14 +127,13 @@ def sample_yn1_ymax(
         fn_delta = y_cov[batch_idx, :] / y_n1_var[batch_idx, :]
 
         # (bs, n_ymax), get the y-values from the sample funs at x locs in this batch
-        # y_funcs_bx = y_funcs[:, batch_idx].T
-        y_funcs_bx = y_n_funcs[:, batch_idx].T
+        y_n_funcs_b = y_n_funcs[:, batch_idx].T
 
         # (bs, n_yn1, n_ymax) <- (bs, n_yn1, 1) - (bs, 1, n_ymax)
         # for each x in batch, get diff between
         #     (1) sampled funcs at x and
         #     (2) sampled y_n1 vals at x
-        y_diffs =  y_n1_b[:,:, None] - y_funcs_bx[:, None, :]
+        y_diffs =  y_n1_b[:,:, None] - y_n_funcs_b[:, None, :]
 
         # (bs, n_yn1, n_ymax, n_x)
         y_funcs_b = (
