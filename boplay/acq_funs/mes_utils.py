@@ -120,19 +120,11 @@ def sample_yn1_ymax(
 
         # generate y_{n+1} values for each x in this batch
         y_mean_b = y_mean[batch_idx, :]
-<<<<<<< HEAD
-        y_sd_b = y_sd[batch_idx, :] + y_noise_std
-        y_n1_b = y_mean_b + y_sd_b * z_yn1  # (bs, n_yn1)
-
-        # (bs, n_x) each row is the delta to adjust a sample fun for one x in batch
-        fn_delta = y_cov[batch_idx, :] / (np.diag(y_cov)[batch_idx, None] + y_noise_var)
-=======
         y_sd_b = y_n1_sd[batch_idx, :]
         y_n1_b = y_mean_b + y_sd_b * z_yn1  # (bs, n_yn1)
 
         # (bs, n_x) each row is the delta to adjust a sample fun for one x in batch
         fn_delta = y_cov[batch_idx, :] / y_n1_var[batch_idx, :]
->>>>>>> master
 
         # (bs, n_ymax), get the y-values from the sample funs at x locs in this batch
         y_n_funcs_b = y_n_funcs[:, batch_idx].T
