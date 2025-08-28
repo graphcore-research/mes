@@ -21,7 +21,8 @@ kt = "matern-3/2"
 # %%
 # Split into baseline vs sweep acquisition functions
 
-df = pd.read_json(DATA_DIR / "benchmark_df.json")
+# df = pd.read_json(DATA_DIR / "benchmark_df_sweep.json")
+df = pd.read_json(DATA_DIR / "benchmark_df_big.json")
 df["regret"] = df.apply(
     lambda x: x["y_true_max"] - x["final_y_max"], axis=1
 )
@@ -94,7 +95,7 @@ pivot
 # %%
 # It'd be cool if we could just plug this straight in to matplotlib, but we need a 1d XY values for each point and a 2d matrix of values.
 
-def _plot_single(kdf, ax, title):
+def _plot_single(kdf, ax, title, setxlabel=True, setylabel=True):
     pivot = kdf.pivot(index="wd", columns="lr", values="regret")
     assert not pivot.isna().any().any(), "Missing points in the lr-wd grid"
 
@@ -104,14 +105,17 @@ def _plot_single(kdf, ax, title):
     assert Z.shape == (Y.shape + X.shape), f"Shape mismatch: {Y.shape + X.shape=} != {Z.shape=}"
 
     # Plot the contour and make a colorbar
-    cf = ax.contourf(X, Y, Z)
+    cf = ax.contourf(X, Y, Z, levels=15)
     cbar = plt.colorbar(cf, ax=ax, pad=0.02, fraction=0.08)
     cbar.set_label("Regret")
 
     # Matplotlib
     ax.set_xscale("log")
-    ax.set_xlabel("Learning Rate")
-    ax.set_ylabel("Weight Decay")
+    ax.set_yscale("log")
+    if setxlabel:
+        ax.set_xlabel("Learning Rate")
+    if setylabel:
+        ax.set_ylabel("Weight Decay")
     # ax.set_yscale("log") # breaks for some reason
     ax.grid(True, alpha=0.3)
     ax.tick_params(axis="x", pad=5)
@@ -171,5 +175,98 @@ kdf_vals: dict[str, int] = {row.acq_func: row.regret for row in kdf_base.itertup
 _add_baseline_annotations(cbar, kdf_vals)
 # plt.show()
 fig
+
+# %%
+
+from itertools import product
+
+acq_funcs = ["ves_gamma", "ves_mc_gamma"] # , "ves_mc_gamma"
+kts = ["matern-3/2", "matern-5/2"]
+n_dims = [2, 4]
+
+prod = list(product(acq_funcs, kts, n_dims))
+n_plots = len(prod)
+row_stride = len(acq_funcs) * len(kts)
+n_rows = n_plots // row_stride
+
+fig, axs = plt.subplots(row_stride, n_rows, figsize=(n_rows * 5, row_stride * 4), sharex=True, sharey=True)
+axs = axs.flatten()
+
+def cdiv(x, y): return (x + y - 1) // y
+
+for i, (acq_func, kt, n_dim) in enumerate(prod):
+    ax = axs[i]
+    sdf = sweep_df.query("acq_func == @acq_func and n_dim == @n_dim").copy()
+    kdf = sdf.query("kernel_type == @kt").copy()
+    title = f"{acq_func.upper().replace('_', ' ')} -- {kt.upper().replace('-', ' ')} ({n_dim}D)"
+    cbar, min_val = _plot_single(kdf, ax, title=title, setylabel=i % row_stride == 0, setxlabel=(i // row_stride) == (n_rows - 1))
+    kdf_base = base_df.query("kernel_type == @kt and n_dim == @n_dim").copy()
+    kdf_vals: dict[str, int] = {row.acq_func: row.regret for row in kdf_base.itertuples()} # type: ignore
+    _add_baseline_annotations(cbar, kdf_vals)
+
+plt.show()
+
+# %%
+
+acq_funcs = ["ves_gamma", "ves_mc_gamma"]
+kts = ["matern-3/2", "matern-5/2"]
+n_dims = [2, 4]
+
+fig = plt.figure(figsize=(len(n_dims)*5, len(acq_funcs)*len(kts)*4))
+subfigs = fig.subfigures(nrows=len(acq_funcs), ncols=1)
+
+for acq_func, subfig in zip(acq_funcs, subfigs):
+    subfig.suptitle(acq_func.upper().replace('_', ' '), y=0.98, fontsize=14, fontweight='bold')
+    axs = subfig.subplots(nrows=len(kts), ncols=len(n_dims), sharex=True, sharey=True)
+    axs = np.atleast_2d(axs)
+
+    for r, kt in enumerate(kts):
+        for c, n_dim in enumerate(n_dims):
+            ax = axs[r, c]
+            sdf = sweep_df.query("acq_func == @acq_func and n_dim == @n_dim").copy()
+            kdf = sdf.query("kernel_type == @kt").copy()
+
+            title = f"{kt.upper().replace('-', ' ')} ({n_dim}D)"
+            cbar, min_val = _plot_single(
+                kdf, ax,
+                title=title,
+                setylabel=(c == 0),                 # left col only
+                setxlabel=(r == len(kts) - 1)       # bottom row only
+            )
+
+            kdf_base = base_df.query("kernel_type == @kt and n_dim == @n_dim").copy()
+            kdf_vals = {row.acq_func: row.regret for row in kdf_base.itertuples()}  # type: ignore
+            _add_baseline_annotations(cbar, kdf_vals)
+
+plt.show()
+
+# %%
+
+fig = plt.figure(figsize=(len(n_dims)*5, len(acq_funcs)*len(kts)*4), constrained_layout=True)
+
+# Small gap between the two subfigures (the sections)
+gs = fig.add_gridspec(nrows=len(acq_funcs), ncols=1, hspace=0.02)
+subfigs = [fig.add_subfigure(gs[i, 0]) for i in range(len(acq_funcs))]
+
+# (optional) shrink global pads a touch
+
+for acq_func, subfig in zip(acq_funcs, subfigs):
+    subfig.suptitle(acq_func.upper().replace('_', ' '), fontsize=14, fontweight='bold')
+
+    axs = subfig.subplots(nrows=len(kts), ncols=len(n_dims), sharex=True, sharey=True)
+    axs = np.atleast_2d(axs)
+
+    for r, kt in enumerate(kts):
+        for c, n_dim in enumerate(n_dims):
+            ax = axs[r, c]
+            sdf = sweep_df.query("acq_func == @acq_func and n_dim == @n_dim").copy()
+            kdf = sdf.query("kernel_type == @kt").copy()
+            title = f"{kt.upper().replace('-', ' ')} ({n_dim}D)"
+            cbar, min_val = _plot_single(kdf, ax, title=title,
+                                         setylabel=(c == 0),
+                                         setxlabel=(r == len(kts) - 1))
+            kdf_base = base_df.query("kernel_type == @kt and n_dim == @n_dim").copy()
+            kdf_vals = {row.acq_func: row.regret for row in kdf_base.itertuples()}  # type: ignore
+            _add_baseline_annotations(cbar, kdf_vals)
 
 # %%
