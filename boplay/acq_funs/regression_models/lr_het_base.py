@@ -18,7 +18,7 @@ def gaussian_log_likelihood(
     *,
     x: pt.Tensor,
     mean: pt.Tensor,
-    log_std: pt.Tensor,
+    std: pt.Tensor,
 ) -> pt.Tensor:
     """
     Compute the Gaussian log likelihood for data points, each row
@@ -32,11 +32,10 @@ def gaussian_log_likelihood(
     Returns:
         lhood: pt.Tensor, shape (n_x, n_points)
     """
-    assert x.shape == mean.shape == log_std.shape, (
-        f"x.shape: {x.shape}, mean.shape: {mean.shape}, log_std.shape: {log_std.shape}"
+    assert x.shape == mean.shape == std.shape, (
+        f"x.shape: {x.shape}, mean.shape: {mean.shape}, log_std.shape: {std.shape}"
     )
-    sdev = log_std.exp().clip(1e-6)
-    lhood = half_log_pi_const - log_std - 0.5 * (x - mean)**2 / sdev**2
+    lhood = half_log_pi_const - pt.log(std) - 0.5 * (x - mean)**2 / std**2
 
     return lhood
 
@@ -122,8 +121,9 @@ def fit_lr_het_model(
         c_stdev = params[:, 3, None]
 
         y_trend = m_trend * x_trend_pt + c_trend
-        epsilon_log_sdev = m_stdev * x_noise_pt + c_stdev
-        lhood = gaussian_log_likelihood(x=y_pt, mean=y_trend, log_std=epsilon_log_sdev)
+        epsilon_std = m_stdev * x_noise_pt + c_stdev
+        epsilon_std = epsilon_std.clip(1e-6)
+        lhood = gaussian_log_likelihood(x=y_pt, mean=y_trend, std=epsilon_std)
 
         # (1, ) <- (n_x, n_points)
         return -lhood.sum()
@@ -136,8 +136,9 @@ def fit_lr_het_model(
     c_stdev = params[:, 3, None]
 
     y_trend = m_trend * x_trend_pt + c_trend
-    epsilon_log_sdev = m_stdev * x_noise_pt + c_stdev
-    gauss_lhood = gaussian_log_likelihood(x=y_pt, mean=y_trend, log_std=epsilon_log_sdev)
+    epsilon_std = m_stdev * x_noise_pt + c_stdev
+    epsilon_std = epsilon_std.clip(1e-6)
+    gauss_lhood = gaussian_log_likelihood(x=y_pt, mean=y_trend, std=epsilon_std)
 
 
     gauss_lhood_vals = gauss_lhood.sum(dim=1).detach().cpu().numpy()
@@ -162,15 +163,16 @@ def fit_lr_het_model(
 
             m_trend, c_trend, m_stdev, c_stdev = params[row_idx, :]
             y_trend = m_trend * trend_basis + c_trend
-            noise_log_sdev = m_stdev * noise_basis + c_stdev
+            epsilon_std = m_stdev * noise_basis + c_stdev
+            epsilon_std = epsilon_std.clip(1e-6)
 
             # go to pytorch world
             y = pt.tensor(y, **pt_params)
             y_trend = pt.tensor(y_trend, **pt_params)
-            noise_log_sdev = pt.tensor(noise_log_sdev, **pt_params)
+            epsilon_std = pt.tensor(epsilon_std, **pt_params)
 
             # and then come back to numpy
-            gauss_lhood = gaussian_log_likelihood(x=y, mean=y_trend, log_std=noise_log_sdev)
+            gauss_lhood = gaussian_log_likelihood(x=y, mean=y_trend, std=epsilon_std)
             return gauss_lhood.detach().cpu().numpy()
         
         return make_heatmap
