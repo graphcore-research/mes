@@ -139,25 +139,26 @@ if __name__ == "__main__":
     # PARAMETER SWEEPS
     benchmark_files = ["mat52_2d_short.json"]
     acq_funs = [
-        "expected_improvement",
-        "random_search",
-        "ves_gamma_0_0",
-        "ves_gamma_0_1",
-        "ves_gamma_0_2",
-        "ves_mc_gamma",
-        "ves_exp_0",
-        "ves_exp_1",
-        "ves_exp_2",
-        "ves_mc_exponential",
+        # "probability_of_improvement",
+        # "expected_improvement",
+        # "random_search",
+        # "ves_gamma_0_0",
+        # "ves_gamma_0_1",
+        # "ves_gamma_0_2",
+        # "ves_mc_gamma",
+        # "ves_exp_0",
+        # "ves_exp_1",
+        # "ves_exp_2",
+        # "ves_mc_exponential",
         "ves_lr_0_0",
         "ves_lr_0_1",
         "ves_lr_0_2",
         "ves_lr_2_0",
         "ves_lr_2_1",
         "ves_lr_2_2",
-        "ves_mc_gaussian",
+        # "ves_mc_gaussian",
     ]
-    y_noise_std_levels = [0.3]
+    y_noise_std_levels = [0.0, 0.3]
     n_y = 100
 
     param_combinations = list(product(range(n_y), benchmark_files, y_noise_std_levels, acq_funs, [results_dir]))
