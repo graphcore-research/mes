@@ -4,6 +4,7 @@ from boplay.benchmark_data import make_benchmark_data
 
 
 DATA_DIR = Path(__file__).parent / "benchmark_datasets"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 N_X = 15
 

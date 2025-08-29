@@ -10,3 +10,4 @@
 *.json
 
 pics/
+*.DS_Store
