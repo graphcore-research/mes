@@ -94,3 +94,29 @@ class GaussianProcess:
             mean.reshape(-1), cov, size=n_samples
         )
         return samples
+    
+    def sample_prior(
+        self,
+        *,
+        x_test: np.ndarray,
+        n_samples: int = 1,
+        seed: int = 0,
+    ) -> np.ndarray:
+        """Draws samples from the prior at test inputs.
+
+        Args:
+            x_test: (n_test, x_dim) numpy array of test inputs.
+            n_samples: Number of prior samples to draw.
+
+        Returns:
+            Samples: A (n_samples, n_test) array of function samples.
+        """
+        np.random.seed(seed)
+        mean = np.zeros(len(x_test))
+        cov = self.kernel(x_test, x_test)
+
+        cov += 1e-8 * np.eye(len(x_test))  # stability
+        samples = np.random.multivariate_normal(
+            mean.reshape(-1), cov, size=n_samples
+        )
+        return samples
