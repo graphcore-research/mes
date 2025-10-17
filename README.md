@@ -27,8 +27,8 @@ uv run pytest
 You can run an experiment using these commands
 ```
 cd scripts
-python make_1d_benchmark_funs.py  # makes a set of 1D GP sample functions for BO testing 
-python make_1d_bo_animation.py            # applies BO method, and parses the resuls into an animation
+python make_1d_benchmark_funs.py  # makes a set of 1D GP sample funs for BO testing
+python make_1d_bo_animation.py    # runs BO and parses the results into an animation
 ```
 
 ![Expected Improvement](scripts/bo_history.gif)
