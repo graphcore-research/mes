@@ -1,20 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..gp import GaussianProcess1D
-from ..kernels import KERNELS
-from ..kde import fit_kde
-
+from boplay.gp import GaussianProcess1D
+from boplay.kernels import se_kernel
+from boplay.kde import fit_kde
 
 
 def plot_gp_and_kde(
     x_train: np.ndarray,
     y_train: np.ndarray,
-    n_samples:int=100,
-    n_x:int=101,
-    y_min:float=-4,
-    y_max:float=6,
-    kde_dens_max:float=5
+    n_samples: int = 100,
+    n_x: int = 101,
+    y_min: float = -4,
+    y_max: float = 6,
+    kde_dens_max: float = 5,
 ) -> tuple[plt.figure, float]:
     """
     Plot the GP and KDE for a 1D regression problem.
@@ -62,13 +61,21 @@ def plot_gp_and_kde(
     label_samples = "sampled functions"
     label_peaks = "sample peaks"
     for y_sample in y_samples.T:
-        ax.plot(x_plot, y_sample, 'r-', alpha=0.1, label=label_samples)
+        ax.plot(x_plot, y_sample, "r-", alpha=0.1, label=label_samples)
         i_top = np.argmax(y_sample)
-        ax.scatter(x_plot[i_top], y_sample[i_top], color='b', alpha=0.2, s=10, zorder=10, label=label_peaks)
+        ax.scatter(
+            x_plot[i_top],
+            y_sample[i_top],
+            color="b",
+            alpha=0.2,
+            s=10,
+            zorder=10,
+            label=label_peaks,
+        )
         label_samples, label_peaks = None, None
 
-    ax.plot(x_plot, y_plot, label='GP mean', color='k')
-    ax.plot(x_train, y_train, 'o', label='Training data')
+    ax.plot(x_plot, y_plot, label="GP mean", color="k")
+    ax.plot(x_train, y_train, "o", label="Training data")
     ax.set_ylim(y_min, y_max)
     ax.legend()
 
@@ -76,12 +83,12 @@ def plot_gp_and_kde(
     ax = axes[1]
     y_kde_points = np.linspace(y_min, y_max, 101)
     y_kde_densities = kde.density(y_kde_points)
-    ax.plot(y_kde_densities, y_kde_points, label=f'KDE {kde.entropy:.3f}')
-    ax.scatter([0] * n_samples, y_star_samples, color='b', alpha=0.2, s=10, zorder=10)
+    ax.plot(y_kde_densities, y_kde_points, label=f"KDE {kde.entropy:.3f}")
+    ax.scatter(
+        [0] * n_samples, y_star_samples, color="b", alpha=0.2, s=10, zorder=10
+    )
     ax.set_ylim(y_min, y_max)
     ax.set_xlim(-0.2, kde_dens_max)
     ax.legend()
 
     return fig, kde.entropy
-
-

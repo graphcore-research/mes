@@ -6,7 +6,7 @@ Benchmark dataclass with the following fields:
     - x: np.ndarray, shape (n_x, x_dim)  # x-locations
     - y: np.ndarray, shape (n_y, n_x)    # each row is one test fun, a y-vector for the n_x locs
     - n_x: int                           # number of x-locations
-    - n_y: int                           # number of y-vectors to generated   
+    - n_y: int                           # number of y-vectors to generated
     - kernel_type: str                   # generating kernel type, "se" for squared exponential
     - kernel_params: dict                # generating kernel parameters
     - x_min: np.ndarray, shape (x_dim,)  # min of each dimension
@@ -44,4 +44,3 @@ if __name__ == "__main__":
         ax.plot(benchmark.x, benchmark.y[i, :], color="gray", alpha=0.5)
 
     fig.savefig(DATA_DIR / "1d_dataset.png")
-

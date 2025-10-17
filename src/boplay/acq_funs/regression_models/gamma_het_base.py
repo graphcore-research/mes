@@ -12,7 +12,9 @@ pt_params = {
 }
 
 
-def gamma_log_likelihood(*, x: pt.Tensor, k: pt.Tensor, theta: pt.Tensor) -> pt.Tensor:
+def gamma_log_likelihood(
+    *, x: pt.Tensor, k: pt.Tensor, theta: pt.Tensor
+) -> pt.Tensor:
     """
     Compute the log likelihood of a Gamma distribution.
 
@@ -25,7 +27,9 @@ def gamma_log_likelihood(*, x: pt.Tensor, k: pt.Tensor, theta: pt.Tensor) -> pt.
         log_likelihood: pt.Tensor, shape (n_x, n_points)
     """
     assert len(x.shape) == 2, "x must be a 2D tensor"
-    log_likelihood = (k - 1) * pt.log(x) - x / theta - k * pt.log(theta) - pt.lgamma(k)
+    log_likelihood = (
+        (k - 1) * pt.log(x) - x / theta - k * pt.log(theta) - pt.lgamma(k)
+    )
 
     # HACKY!
     # negative x values will return nan log_likelihood, so set to 0
@@ -43,8 +47,8 @@ def fit_gamma_het_model(
     k_min: float = 0.01,
     k_max: float = 10.0,
     lr: float = 1e-2,
-    wd: float = 0.,
-    wd_k: float=4,
+    wd: float = 0.0,
+    wd_k: float = 4,
     max_iters: int = 200,
     make_heatmap: bool = False,
 ) -> np.ndarray:
@@ -102,7 +106,7 @@ def fit_gamma_het_model(
                 pt.zeros(n_x, 1, **pt_params),
                 noise_mean_emp,
             ],
-            axis=1
+            axis=1,
         )
     )
 
@@ -122,7 +126,7 @@ def fit_gamma_het_model(
         c_k = params[:, 1, None]
         m_theta = params[:, 2, None]
         c_theta = params[:, 3, None]
-        
+
         # (n_x, n_points) <- (n_x, 1) * (n_x, n_points) + (n_x, 1)
         k = m_k * k_basis_pt + c_k
         theta = m_theta * beta_basis_pt + c_theta
@@ -132,12 +136,14 @@ def fit_gamma_het_model(
 
         lhood = gamma_log_likelihood(x=noise_vals, k=k, theta=theta)
 
-        weight_decay = wd_k * (k - 1)**2
+        weight_decay = wd_k * (k - 1) ** 2
 
         # (1, ) <- (n_x, n_points)
         return -lhood.sum() + weight_decay.sum()
 
-    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd, max_iters=max_iters)
+    params, _ = optimize_adam(
+        theta=params, loss_fn=loss_fun, lr=lr, wd=wd, max_iters=max_iters
+    )
 
     # evaluate to get final log likelihoods and final acquisition values
     # (n_x, n_points)
@@ -149,14 +155,17 @@ def fit_gamma_het_model(
     k = m_k * k_basis_pt + c_k
     theta = m_theta * beta_basis_pt + c_theta
 
-    gamma_lhood = gamma_log_likelihood(x=noise_vals, k=k,theta=theta)
+    gamma_lhood = gamma_log_likelihood(x=noise_vals, k=k, theta=theta)
 
     if not make_heatmap:
         # (n_x, )
         return gamma_lhood.sum(dim=1).detach().cpu().numpy()
 
     else:
-        def make_heatmap(*, row_idx: int, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+
+        def make_heatmap(
+            *, row_idx: int, x: np.ndarray, y: np.ndarray
+        ) -> np.ndarray:
             """
             Make a heatmap of the Gamma log likelihood for a given row of the data.
             """
@@ -189,9 +198,7 @@ def fit_gamma_het_model(
 
             # (n_x,)
             gamma_lhood = gamma_log_likelihood(
-                x=noise_vals[None, :],
-                k=k[None, :],
-                theta=theta[None, :]
+                x=noise_vals[None, :], k=k[None, :], theta=theta[None, :]
             )
 
             # and then come back to numpy
@@ -202,5 +209,5 @@ def fit_gamma_het_model(
             gamma_lhood_np[mask] = -np.inf
 
             return gamma_lhood_np
-        
+
         return make_heatmap

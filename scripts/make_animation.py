@@ -8,12 +8,12 @@ from boplay.plotting.animate import animate_files
 
 # Folders
 ROOT_DIR = Path(__file__).parent
-FRAMES_DIR = ROOT_DIR / 'frames'
+FRAMES_DIR = ROOT_DIR / "frames"
 FRAMES_DIR.mkdir(exist_ok=True)
 
 # Image filenames
 GP_0_PNG = ROOT_DIR / "original_data.png"
-Y_NEW_BENEFIT_PNG = ROOT_DIR / 'entropy_vs_y_new.png'
+Y_NEW_BENEFIT_PNG = ROOT_DIR / "entropy_vs_y_new.png"
 ANIMATION_GIF = ROOT_DIR / "animation.gif"
 
 # Computational params
@@ -24,7 +24,7 @@ Y_NEW_MIN = -2
 Y_NEW_MAX = 3
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # make some data points
     x_train = np.asarray([1, 5, 7])
     y_train = np.asarray([0.5, 0, 0.5])
@@ -39,7 +39,6 @@ if __name__ == '__main__':
     y_new_vals = np.linspace(Y_NEW_MIN, Y_NEW_MAX, 31)
     entropies = []
     for i, y_new_i in enumerate(y_new_vals):
-
         # original + synthetic data
         x_train_i = np.concatenate([x_train, x_new])
         y_train_i = np.concatenate([y_train, np.array([y_new_i])])
@@ -56,13 +55,11 @@ if __name__ == '__main__':
         plt.close(fig_i)
         print(f"Saved image: {FRAMES_DIR}/{i:04}.png")
 
-    
     animate_files(
         frames_dir=FRAMES_DIR,
         output_filename=ANIMATION_GIF,
     )
     print(f"Saved animation: {ANIMATION_GIF}")
-
 
     # make a plot of synthetic y-value vs "benefit" of that y-value
     ei_vals = np.clip(y_new_vals - max(y_train), 0, 1000)
@@ -73,9 +70,7 @@ if __name__ == '__main__':
     ax.plot(y_new_vals, ei_vals, label="Expected improvement")
     ax.set_xlabel("new y value")
     ax.set_xlabel("benefit of new y-value")
-    ax.vlines(x=0.5, ymin = 0, ymax=max(entropies), label="y data max", color="g")
+    ax.vlines(x=0.5, ymin=0, ymax=max(entropies), label="y data max", color="g")
     ax.legend()
     fig.savefig(Y_NEW_BENEFIT_PNG)
     print(f"Saved y benefit: {Y_NEW_BENEFIT_PNG}")
-
-

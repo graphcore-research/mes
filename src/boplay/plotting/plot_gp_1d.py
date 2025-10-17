@@ -36,10 +36,10 @@ def plot_gp_and_acq_fun(
     acq_fun_vals = acq_fun_vals.reshape(-1)
 
     # Line 1/2: plot the GP and the training data
-    ax.plot(x_grid, y_true, label='True function', color='b')
+    ax.plot(x_grid, y_true, label="True function", color="b")
     ax.fill_between(x_grid, y_mean - y_sd, y_mean + y_sd, alpha=0.2)
-    ax.plot(x_grid, y_mean, label='GP mean', color='k')
-    ax.plot(x_train, y_train, 'o', label='Training data')
+    ax.plot(x_grid, y_mean, label="GP mean", color="k")
+    ax.plot(x_train, y_train, "o", label="Training data")
     ax.set_ylim(y_min, y_max)
 
     # Line 2/2: plot the acquisition function and its peak
@@ -47,11 +47,17 @@ def plot_gp_and_acq_fun(
     acq_fun_vals = acq_fun_vals / (np.max(acq_fun_vals) + 1e-8)
     acq_fun_vals = acq_fun_vals + y_min
 
-    ax.plot(x_grid, acq_fun_vals, label='Acquisition function', color='r')
+    ax.plot(x_grid, acq_fun_vals, label="Acquisition function", color="r")
 
     acq_fun_vals_max = np.max(acq_fun_vals)
     acq_fun_vals_max_idx = np.argmax(acq_fun_vals)
-    ax.plot(x_grid[acq_fun_vals_max_idx], acq_fun_vals_max, 'o', label='Acquisition function max', color='r')
+    ax.plot(
+        x_grid[acq_fun_vals_max_idx],
+        acq_fun_vals_max,
+        "o",
+        label="Acquisition function max",
+        color="r",
+    )
 
     ax.legend()
     ax.set_title(f"Iteration {len(x_train)}")
@@ -66,7 +72,6 @@ def plot_bo_history_1d(
     animation_gif: Path,
     tmp_dir: Path = None,
 ) -> None:
-
     if tmp_dir is None:
         tmp_dir = ROOT / "pics" / f"{animation_gif.stem}_frames"
         tmp_dir.mkdir(parents=True, exist_ok=True)
@@ -91,7 +96,7 @@ def plot_bo_history_1d(
             y_mean=y_mean,
             y_sd=y_sd,
             acq_fun_vals=acq_fun_vals,
-            ax=ax
+            ax=ax,
         )
         fig.savefig(tmp_dir / f"bo_state_{n_train:03d}.png")
         plt.close(fig)

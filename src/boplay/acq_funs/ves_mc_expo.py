@@ -10,9 +10,9 @@ def ves_mc_exponential(
     y_cov: np.ndarray,
     y_best: float,
     y_noise_std: float,
-    n_yn1: int=10,
-    n_ymax: int=30,
-    batch_size: int=1e9,
+    n_yn1: int = 10,
+    n_ymax: int = 30,
+    batch_size: int = 1e9,
     idx_train: np.ndarray,
     **unused,
 ) -> np.ndarray:
@@ -87,7 +87,3 @@ def ves_mc_exponential(
     )
 
     return acq_fun_vals
-
-
-
-

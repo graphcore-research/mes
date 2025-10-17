@@ -89,7 +89,14 @@ def _process_hyperparams(params):
     y_true_max = np.max(benchmark.y, axis=1)
     rows = []
     for i, bo in enumerate(bos):
-        steps, y_max_history, y_max_diff, y_rec_diff_mean, y_rec_diff_max, y_max_var = zip(*bo.y_max_history)
+        (
+            steps,
+            y_max_history,
+            y_max_diff,
+            y_rec_diff_mean,
+            y_rec_diff_max,
+            y_max_var,
+        ) = zip(*bo.y_max_history)
         final_y_max = y_max_history[-1]
         row = {
             "acq_func": acq_type,
@@ -111,10 +118,14 @@ def _process_hyperparams(params):
 
 
 if __name__ == "__main__":
-    param_combinations = list(product(acq_types, kernel_types, len_scales, n_dims))
+    param_combinations = list(
+        product(acq_types, kernel_types, len_scales, n_dims)
+    )
     n_sweeps = len(param_combinations)
     lock = RLock()
-    with Pool(processes=cpu_count(), initializer=tqdm.set_lock, initargs=(lock,)) as pool:
+    with Pool(
+        processes=cpu_count(), initializer=tqdm.set_lock, initargs=(lock,)
+    ) as pool:
         # Run sweep in parallel, futures are evaluated lazily.
         # We don't care what order the futures return in.
         futures = tqdm(

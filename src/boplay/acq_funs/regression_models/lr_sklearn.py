@@ -31,6 +31,6 @@ def fit_lr_sklearn(
         model = LinearRegression()
         model.fit(x, y)
         y_pred = model.predict(x)
-        mse[i] = - mean_squared_error(y, y_pred)
+        mse[i] = -mean_squared_error(y, y_pred)
 
     return mse

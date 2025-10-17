@@ -2,7 +2,7 @@ from functools import partial
 
 from boplay.bo_algorithm import BayesianOptimization
 from boplay.benchmark_data import make_benchmark_data
-from boplay.kernels import KERNELS  
+from boplay.kernels import KERNELS
 from boplay.acq_funs import random_search
 
 
@@ -14,7 +14,6 @@ def test_bo_deterministic():
         n_x=50,
         n_y=1,
     )
-
 
     kernel = partial(KERNELS[benchmark.kernel], **benchmark.kernel_params)
 

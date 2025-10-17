@@ -15,7 +15,7 @@ def test_sampling_y_max():
     # Define a GP model with an SE kernel
     kernel = lambda x1, x2: KERNELS["se"](x1, x2, len_scale=10.0, sigma_f=1.0)
     model = GaussianProcess(x_train=x_train, y_train=y_train, kernel=kernel)
-    
+
     # get the mean and cov of predictions
     n_x_test = 101
     x_test = np.linspace(0, 100, n_x_test).reshape(-1, 1)
@@ -42,8 +42,8 @@ def test_sampling_y_max():
     # ensure each sampled function passes through the correct y_n1 at x_idx
     for x_idx in range(n_x_test):
         for j in range(n_yn1):
-            y_n1_ij = y_n1_samples[x_idx, j]               # scalar
-            y_funcs_ij = y_funcs_samples[x_idx, j, :, :]   # (n_ymax, n_x_test)
+            y_n1_ij = y_n1_samples[x_idx, j]  # scalar
+            y_funcs_ij = y_funcs_samples[x_idx, j, :, :]  # (n_ymax, n_x_test)
             y_max_samples_ij = y_max_samples[x_idx, j, :]  # (n_ymax, )
 
             y_best_ij = max(y_n1_ij, y_best) - 1e-3
@@ -52,4 +52,3 @@ def test_sampling_y_max():
 
             # make sure each sampled function passes through y_n1 at x_idx
             assert max(y_n1_ij - y_funcs_ij[:, x_idx]) < 1e-9
-

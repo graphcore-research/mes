@@ -16,6 +16,7 @@ class Test_fit_funs(unittest.TestCase):
 
     This is a sanity check that the model fit functions are working.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rng = np.random.default_rng(0)
@@ -23,7 +24,9 @@ class Test_fit_funs(unittest.TestCase):
         self.n_points = 61
 
         # deterministc dataset, y-values are above the ReLU trend line
-        x_data = np.tile(np.linspace(-3, 3, self.n_points)[None, :], (self.n_rows, 1))
+        x_data = np.tile(
+            np.linspace(-3, 3, self.n_points)[None, :], (self.n_rows, 1)
+        )
         x_min = 0
         trend = np.clip(x_data, x_min, None)
 
@@ -48,7 +51,9 @@ class Test_fit_funs(unittest.TestCase):
         Validate a model fit function.
         """
         scores = model_fit_fun(**dataset)
-        assert scores.shape == (self.n_rows,), f"scores.shape: {scores.shape} != ({self.n_rows},)"
+        assert scores.shape == (self.n_rows,), (
+            f"scores.shape: {scores.shape} != ({self.n_rows},)"
+        )
         assert np.isnan(scores).sum() == 0, f"scores: {scores}"
         assert np.isinf(scores).sum() == 0, f"scores: {scores}"
 
@@ -56,13 +61,16 @@ class Test_fit_funs(unittest.TestCase):
     def build_fit_fun_tests(cls):
         def make_tests(fun: Callable) -> Callable:
             def test_deterministic(self):
-                self._validate_fit_fun(model_fit_fun=fun, dataset=self.safe_dataset)
-            
+                self._validate_fit_fun(
+                    model_fit_fun=fun, dataset=self.safe_dataset
+                )
+
             def test_stochastic(self):
-                self._validate_fit_fun(model_fit_fun=fun, dataset=self.noisy_dataset)
+                self._validate_fit_fun(
+                    model_fit_fun=fun, dataset=self.noisy_dataset
+                )
 
             return test_deterministic, test_stochastic
-
 
         for fun_name in fun_names:
             fit_fun = getattr(regression_models, fun_name)

@@ -9,9 +9,10 @@ from boplay.kernels import KERNELS
 
 @dataclass
 class Benchmark:
-    """ A benchmark data set for BO methods """
-    x : np.ndarray
-    y : np.ndarray
+    """A benchmark data set for BO methods"""
+
+    x: np.ndarray
+    y: np.ndarray
     n_x: int
     n_y: int
     kernel: str
@@ -44,8 +45,10 @@ class Benchmark:
         return cls(**data)
 
 
-def _make_x_grid(*, n: int, x_min: list[float], x_max: list[float]) -> np.ndarray:
-    """ Make a full dense grid of points in the given ranges """
+def _make_x_grid(
+    *, n: int, x_min: list[float], x_max: list[float]
+) -> np.ndarray:
+    """Make a full dense grid of points in the given ranges"""
 
     x_min = np.asarray(x_min).reshape(-1)
     x_max = np.asarray(x_max).reshape(-1)
@@ -64,8 +67,12 @@ def _make_x_grid(*, n: int, x_min: list[float], x_max: list[float]) -> np.ndarra
     # stack column vectors into a big x matrix
     x_grid = np.hstack(x_grid)
 
-    assert x_grid.shape[1] == len(x_min), "x_grid must have the same number of columns as x_min"
-    assert x_grid.shape[0] == n**len(x_min), "x_grid must have the same number of rows as n**len(x_min)"
+    assert x_grid.shape[1] == len(x_min), (
+        "x_grid must have the same number of columns as x_min"
+    )
+    assert x_grid.shape[0] == n ** len(x_min), (
+        "x_grid must have the same number of rows as n**len(x_min)"
+    )
 
     return x_grid
 
@@ -76,7 +83,7 @@ def _make_y_data(
     n_y: int,
     kernel: callable,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """ Make a random y vectors from a kernel matrix """
+    """Make a random y vectors from a kernel matrix"""
     assert len(x_grid.shape) == 2, "x_grid must be a matrix"
 
     mean_vector = np.zeros(x_grid.shape[0])
@@ -91,15 +98,15 @@ def _make_y_data(
 
 def make_benchmark_data(
     *,
-    n_x: int=100,
-    n_y: int=1000,
-    kernel_type: str="se",
-    x_min: np.ndarray=[0],
-    x_max: np.ndarray=[100],
+    n_x: int = 100,
+    n_y: int = 1000,
+    kernel_type: str = "se",
+    x_min: np.ndarray = [0],
+    x_max: np.ndarray = [100],
     kernel_params: dict = {"len_scale": 10.0, "sigma_f": 1.0},
-    seed:int = 0,
+    seed: int = 0,
 ) -> Benchmark:
-    """ Make a benchmark data set for BO methods """
+    """Make a benchmark data set for BO methods"""
     np.random.seed(seed)
 
     x_grid = _make_x_grid(n=n_x, x_min=x_min, x_max=x_max)
@@ -119,5 +126,5 @@ def make_benchmark_data(
         kernel=kernel_type,
         kernel_params=kernel_params,
         x_min=x_min,
-        x_max=x_max
+        x_max=x_max,
     )

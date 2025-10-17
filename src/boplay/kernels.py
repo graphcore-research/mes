@@ -27,7 +27,7 @@ def se_kernel(
     assert x1.shape[1] == x2.shape[1], "x1 and x2 must have the same dimension"
 
     # (n1, 1, d) - (1, n2, d) -> (n1, n2, d)
-    diff = (x1[:, None, :] - x2[None, :, :])**2
+    diff = (x1[:, None, :] - x2[None, :, :]) ** 2
     diff = diff.sum(axis=2)
     scale = -0.5 / (len_scale * len_scale)
     return sigma_f**2 * np.exp(scale * diff)
@@ -47,11 +47,11 @@ def matern_kernel(
     assert len(x1.shape) == 2, "x1 must be a matrix"
     assert len(x2.shape) == 2, "x2 must be a matrix"
     assert x1.shape[1] == x2.shape[1], "x1 and x2 must have the same dimension"
-    
+
     # Pairwise Euclidean distance
-    diff = (x1[:, None, :] - x2[None, :, :])**2
+    diff = (x1[:, None, :] - x2[None, :, :]) ** 2
     r = np.sqrt(diff.sum(axis=2)) / len_scale
-    
+
     if nu == 0.5:
         # Special case: exponential kernel
         return sigma_f**2 * np.exp(-r)
@@ -60,13 +60,15 @@ def matern_kernel(
         return sigma_f**2 * (1.0 + sqrt3_r) * np.exp(-sqrt3_r)
     elif nu == 2.5:
         sqrt5_r = np.sqrt(5) * r
-        return sigma_f**2 * (1.0 + sqrt5_r + 5.0 * r**2 / 3.0) * np.exp(-sqrt5_r)
+        return (
+            sigma_f**2 * (1.0 + sqrt5_r + 5.0 * r**2 / 3.0) * np.exp(-sqrt5_r)
+        )
     else:
         # General case
         factor = np.sqrt(2 * nu) * r / len_scale
         # Avoid division by zero when r = 0
         factor = np.where(r == 0.0, 1e-10, factor)
-        prefactor = (2**(1.0 - nu)) / gamma(nu)
+        prefactor = (2 ** (1.0 - nu)) / gamma(nu)
         return sigma_f**2 * prefactor * (factor**nu) * kv(nu, factor)
 
 
