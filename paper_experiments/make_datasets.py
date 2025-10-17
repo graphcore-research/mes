@@ -19,7 +19,6 @@ if __name__ == "__main__":
     )
     mat52_2d_short.save(DATA_DIR / "mat52_2d_short.json")
 
-
     mat52_2d_long = make_benchmark_data(
         n_x=N_X,
         n_y=1000,
@@ -29,7 +28,6 @@ if __name__ == "__main__":
         x_max=[100, 100],
     )
     mat52_2d_long.save(DATA_DIR / "mat52_2d_long.json")
-
 
     se_2d_short = make_benchmark_data(
         n_x=N_X,
@@ -41,7 +39,6 @@ if __name__ == "__main__":
     )
     se_2d_short.save(DATA_DIR / "se_2d_short.json")
 
-
     se_2d_long = make_benchmark_data(
         n_x=N_X,
         n_y=1000,
@@ -51,4 +48,3 @@ if __name__ == "__main__":
         x_max=[100, 100],
     )
     se_2d_long.save(DATA_DIR / "se_2d_long.json")
-

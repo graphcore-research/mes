@@ -150,4 +150,3 @@ def fit_lr_2_2(
         max_iters=max_iters,
         make_heatmap=make_heatmap,
     )
-

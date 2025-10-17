@@ -23,7 +23,6 @@ from .ves_1d_regression import (
 )
 
 
-
 ACQ_FUNCS = {
     "probability_of_improvement": probability_of_improvement,
     "ves_ramp": ves_exponential_ramp,

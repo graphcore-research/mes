@@ -3,7 +3,7 @@ from functools import partial
 from datetime import datetime
 import subprocess as sp
 
-from multiprocessing import Pool, cpu_count, RLock, current_process
+from multiprocessing import cpu_count
 from itertools import product
 
 from tqdm.contrib.concurrent import process_map
@@ -24,17 +24,16 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def run_benchmark(
-    *, 
+    *,
     benchmark: Benchmark,
-    y_idx:int,
+    y_idx: int,
     acq_fun_name: str,
     filename: Path,
-    n_init: int=4,
-    n_final: int=100,
-    y_noise_std: float=0.0,
-    seed: int=0,
+    n_init: int = 4,
+    n_final: int = 100,
+    y_noise_std: float = 0.0,
+    seed: int = 0,
 ) -> None:
-
     """
     Run a benchmark experiment and save the results to a file.
     """
@@ -60,7 +59,14 @@ def run_benchmark(
     bo.run()
 
     # unpack and save the results
-    steps, y_max_history, y_max_diff, y_rec_diff_mean, y_rec_diff_max, y_max_var = zip(*bo.y_max_history)
+    (
+        steps,
+        y_max_history,
+        y_max_diff,
+        y_rec_diff_mean,
+        y_rec_diff_max,
+        y_max_var,
+    ) = zip(*bo.y_max_history)
     final_y_max = y_max_history[-1]
     row = {
         "acq_func": acq_fun_name,
@@ -114,7 +120,7 @@ def bench_wrapper(params) -> Path:
             acq_fun_name=acq_fun,
             y_noise_std=y_noise_std,
             filename=filename,
-        )  
+        )
 
 
 def make_results_dirname():
@@ -123,13 +129,14 @@ def make_results_dirname():
     """
     run_id = len(list(RESULTS_DIR.glob("*")))
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    commit_hash = sp.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+    commit_hash = (
+        sp.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+    )
     results_dir = RESULTS_DIR / f"{run_id}_{time}_{commit_hash}"
     return results_dir
 
 
 if __name__ == "__main__":
-
     # results_dir = RESULTS_DIR / "0"
     results_dir = make_results_dirname()
 
@@ -161,19 +168,25 @@ if __name__ == "__main__":
     y_noise_std_levels = [0.0, 0.3]
     n_y = 100
 
-    param_combinations = list(product(range(n_y), benchmark_files, y_noise_std_levels, acq_funs, [results_dir]))
+    param_combinations = list(
+        product(
+            range(n_y),
+            benchmark_files,
+            y_noise_std_levels,
+            acq_funs,
+            [results_dir],
+        )
+    )
 
     print(f"Running {len(param_combinations)} experiments")
 
-    if 1==11:
-
+    if 1 == 11:
         for params in param_combinations:
             bench_wrapper(params)
 
-    elif 1==1:
+    elif 1 == 1:
         _ = process_map(
             bench_wrapper,
             param_combinations,
             max_workers=cpu_count(),
         )
-

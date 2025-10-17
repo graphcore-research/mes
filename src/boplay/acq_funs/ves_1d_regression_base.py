@@ -11,13 +11,13 @@ def ves_1d_regression_base(
     y_cov: np.ndarray,
     y_best: float,
     y_noise_std: float,
-    n_yn1: int=10,
-    n_ymax: int=30,
-    batch_size: int=1e9,
+    n_yn1: int = 10,
+    n_ymax: int = 30,
+    batch_size: int = 1e9,
     idx_train: np.ndarray,
     model_fit_fun: Callable,
-    model_fit_fun_kwargs: dict=None,
-    expand_y_n1: bool=True,
+    model_fit_fun_kwargs: dict = None,
+    expand_y_n1: bool = True,
 ) -> np.ndarray:
     """
     Variational Entropy Search acquisition function using any regression model
@@ -35,7 +35,7 @@ def ves_1d_regression_base(
         model_fit_fun: Callable, function to fit a 1D regression model and return fitness scores
         expand_y_n1: bool, whether to expand the y_n1 values to match the y_max_samples
         model_fit_fun_kwargs: dict, keyword arguments to pass to the model_fit_fun
-    
+
     Returns:
         np.ndarray, shape (n_x,)
     """
@@ -93,7 +93,3 @@ def ves_1d_regression_base(
     )
 
     return acq_fun_vals
-
-
-
-

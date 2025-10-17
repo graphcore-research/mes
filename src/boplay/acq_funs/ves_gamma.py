@@ -1,9 +1,10 @@
 import numpy as np
 
 from boplay.acq_funs.mes_utils import sample_yn1_ymax, reconstruct_full_vector
-from boplay.acq_funs.gamma_distribution import estimate_gamma_params, gamma_log_likelihood
-from scipy.special import gammaln
-from scipy.stats import norm
+from boplay.acq_funs.gamma_distribution import (
+    estimate_gamma_params,
+    gamma_log_likelihood,
+)
 
 
 def ves_gamma(
@@ -13,9 +14,9 @@ def ves_gamma(
     y_cov: np.ndarray,
     y_best: float,
     y_noise_std: float,
-    n_yn1: int=20,
-    n_ymax: int=100,
-    batch_size: int=1e9,
+    n_yn1: int = 20,
+    n_ymax: int = 100,
+    batch_size: int = 1e9,
     idx_train: np.ndarray,
     lr: float = 1e-2,
     wd: float = 0.0,
@@ -110,9 +111,3 @@ def ves_gamma(
     )
 
     return acq_fun_vals
-
-
-
-
-
-

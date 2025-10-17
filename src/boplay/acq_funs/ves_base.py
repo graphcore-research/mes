@@ -37,9 +37,9 @@ def optimize_adam(
     theta: pt.Tensor,
     loss_fn: Callable,
     max_iters: int = 200,
-    tol: float=1e-9,
-    lr: float=1e-2,
-    wd: float = 0.
+    tol: float = 1e-9,
+    lr: float = 1e-2,
+    wd: float = 0.0,
 ) -> tuple[pt.Tensor, float]:
     """
     Optimize the given parameters using Adam.
@@ -86,15 +86,15 @@ def ves_base(
     y_cov: np.ndarray,
     y_best: float,
     y_noise_std: float,
-    n_yn1: int=10,
-    n_ymax: int=30,
-    batch_size: int=1e9,
+    n_yn1: int = 10,
+    n_ymax: int = 30,
+    batch_size: int = 1e9,
     initialize_params: Callable,
     compute_distro_params: Callable,
     compute_log_likelihood: Callable,
     idx_train: np.ndarray,
     lr: float = 1e-2,
-    wd: float = 0.,
+    wd: float = 0.0,
 ) -> np.ndarray:
     """
     Compute the acquisition function for the base case.
@@ -174,13 +174,17 @@ def ves_base(
 
         loss = -log_likelihoods.nanmean()
         if loss.isnan():
-            import pdb; pdb.set_trace()
+            import pdb
+
+            pdb.set_trace()
             print(loss)
         return loss
 
     # optimize the parameters
     # params_optimal, _ = optimize_lbfgs(theta=params_initial,loss_fn=loss_fn)
-    params_optimal, _ = optimize_adam(theta=params_initial, loss_fn=loss_fn, lr=lr, wd=wd)
+    params_optimal, _ = optimize_adam(
+        theta=params_initial, loss_fn=loss_fn, lr=lr, wd=wd
+    )
 
     # (n_x_test, n_yn1):  compute the distro parameters
     distro_params = compute_distro_params(

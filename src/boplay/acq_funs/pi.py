@@ -8,7 +8,7 @@ def probability_of_improvement(
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     y_best: float,
-    y_indiff:float=0.01,
+    y_indiff: float = 0.01,
     idx_train: np.ndarray,
     **unused,
 ) -> np.ndarray:

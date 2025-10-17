@@ -60,10 +60,10 @@ def initialize_exponential_ramp_params(
 
     # (n_x,) <- (n_x, n_yn1/3)
     # get average empirical lambda from all wedge under/over threshold
-    l_lo = np.log(l_lo.mean(axis=1)) # (n_x,)
-    l_hi = np.log(l_hi.mean(axis=1)) # (n_x,)
+    l_lo = np.log(l_lo.mean(axis=1))  # (n_x,)
+    l_hi = np.log(l_hi.mean(axis=1))  # (n_x,)
 
-    return np.stack([y_lo, l_lo, y_hi, l_hi], axis=1) # (n_x, 4)
+    return np.stack([y_lo, l_lo, y_hi, l_hi], axis=1)  # (n_x, 4)
 
 
 def compute_exponential_lambda_values(
@@ -138,12 +138,12 @@ def ves_exponential_ramp(
     y_cov: np.ndarray,
     y_best: float,
     y_noise_std: float,
-    n_yn1: int=10,
-    n_ymax: int=30,
-    batch_size: int=1e9,
+    n_yn1: int = 10,
+    n_ymax: int = 30,
+    batch_size: int = 1e9,
     idx_train: np.ndarray,
     lr: float = 1e-2,
-    wd: float = 0.,
+    wd: float = 0.0,
 ) -> np.ndarray:
     """
     Variational Entropy search with the exponenital ramp to approximate how

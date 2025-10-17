@@ -2,17 +2,16 @@ import numpy as np
 from scipy.stats import norm
 
 
-def gaussian_bin_centers(n:int, mu:float=0.0, sigma:float=1.0) -> list[float]:
-    """ Get the quantiles of the Gaussian """
-    ps = (np.arange(n) + 0.5) / n   # bin centers in [0, 1]
+def gaussian_bin_centers(
+    n: int, mu: float = 0.0, sigma: float = 1.0
+) -> list[float]:
+    """Get the quantiles of the Gaussian"""
+    ps = (np.arange(n) + 0.5) / n  # bin centers in [0, 1]
     return norm.ppf(ps, loc=mu, scale=sigma)
 
 
 def reconstruct_full_vector(
-    *,
-    acq_fun_vals_idx_test: np.ndarray,
-    idx_test: np.ndarray,
-    n_x: int
+    *, acq_fun_vals_idx_test: np.ndarray, idx_test: np.ndarray, n_x: int
 ) -> np.ndarray:
     """
     Given the acq_fun values at a set of test points, reconstruct the full
@@ -22,7 +21,7 @@ def reconstruct_full_vector(
         acq_fun_vals: np.ndarray, shape (n_x, )
         idx_test: np.ndarray, shape (n_x, )
         n_x: int
-    
+
     Returns:
         af_vals: np.ndarray, shape (n_x, )
     """
@@ -41,10 +40,10 @@ def sample_yn1_ymax(
     y_mean: np.ndarray,
     y_cov: np.ndarray,
     y_noise_std: float,
-    n_yn1: int=10,
-    n_ymax: int=30,
-    batch_size: int=1e9,
-    noise_jitter: float=1e-9,
+    n_yn1: int = 10,
+    n_ymax: int = 30,
+    batch_size: int = 1e9,
+    noise_jitter: float = 1e-9,
 ) -> np.ndarray:
     """
     Given the mean and covariance of all the function values at all the x-locations,
@@ -61,13 +60,13 @@ def sample_yn1_ymax(
         y_sample to include the new (x, y_n1) point.
 
             y_sample_new = y_sample + (y_n1 - y_sample[x]) * y_cov[x, :] / y_cov[x, x]
-        
+
         where the shapes are:
             y_sample_new:         (n_x, ) vector
             (y_n1 - y_sample[x]): scalar
             y_cov[x, :]:          (n_x, ) vector
             y_cov[x, x]:          scalar
-        
+
     This function is the above computation that has been vectorised over 3 axes:
         (1) n_x x-locations  (supports minibatching)
         (2) n_yn1 sampled y_n1 values
@@ -88,12 +87,12 @@ def sample_yn1_ymax(
         y_max_output: np.ndarray, shape (n_x, n_yn1, n_ymax)
     """
     y_mean = y_mean.reshape(-1, 1)
-    n_x = y_mean.shape[0]       # total number of x -locations
-    bs = min(batch_size, n_x)   # batch size
+    n_x = y_mean.shape[0]  # total number of x -locations
+    bs = min(batch_size, n_x)  # batch size
     y_noise_var = y_noise_std**2
 
     batch_idx_subsets = np.array_split(np.arange(n_x), n_x // bs)
-     
+
     # (n_x, n_x) square matrices
     y_cov += noise_jitter * np.eye(y_cov.shape[0])
     chol_k = np.linalg.cholesky(y_cov)
@@ -112,12 +111,11 @@ def sample_yn1_ymax(
     z_yn1 = gaussian_bin_centers(n_yn1).reshape(1, n_yn1)
 
     # output tensors to be filled with each minibatch and concat at the end
-    y_n1_output = []       # (n_x, n_yn1)
-    y_funcs_output = []    # (n_x, n_yn1, n_ymax, n_x)
-    y_max_output = []      # (n_x, n_yn1, n_ymax)
+    y_n1_output = []  # (n_x, n_yn1)
+    y_funcs_output = []  # (n_x, n_yn1, n_ymax, n_x)
+    y_max_output = []  # (n_x, n_yn1, n_ymax)
 
     for batch_idx in batch_idx_subsets:
-
         # generate y_{n+1} values for each x in this batch
         y_mean_b = y_mean[batch_idx, :]
         y_sd_b = y_n1_sd[batch_idx, :]
@@ -133,14 +131,14 @@ def sample_yn1_ymax(
         # for each x in batch, get diff between
         #     (1) sampled funcs at x and
         #     (2) sampled y_n1 vals at x
-        y_diffs =  y_n1_b[:,:, None] - y_n_funcs_b[:, None, :]
+        y_diffs = y_n1_b[:, :, None] - y_n_funcs_b[:, None, :]
 
         # (bs, n_yn1, n_ymax, n_x)
         y_funcs_b = (
-            y_funcs[None, None, :, :] +       # ( 1,     1, n_ymax, n_x)
-            (
-                y_diffs[:, :, :, None] *      # (bs, n_yn1, n_ymax,   1)
-                fn_delta[:, None, None, :]    # (bs,     1,      1, n_x)
+            y_funcs[None, None, :, :]  # ( 1,     1, n_ymax, n_x)
+            + (
+                y_diffs[:, :, :, None]  # (bs, n_yn1, n_ymax,   1)
+                * fn_delta[:, None, None, :]  # (bs,     1,      1, n_x)
             )
         )
 

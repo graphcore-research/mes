@@ -31,6 +31,7 @@ def acq_fun_maker(model_fit_fun: Callable) -> Callable:
     """
     Make an acquisition function that uses a given model fit function.
     """
+
     def acq_fun(
         *,
         y_best: float,
@@ -45,6 +46,7 @@ def acq_fun_maker(model_fit_fun: Callable) -> Callable:
             model_fit_fun_kwargs=dict(x_min=y_best),
             **kwargs,
         )
+
     return acq_fun
 
 

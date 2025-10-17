@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import scienceplots
 
 plt.style.use(["science"])
 
@@ -33,7 +32,9 @@ def load_benchmark_data(data_dir):
 
 def aggregate_regret_data(df):
     """Group and aggregate regret data by experimental conditions."""
-    regret_df = df.groupby(["kernel_type", "n_dim", "acq_func", "steps", "lr", "wd"])
+    regret_df = df.groupby(
+        ["kernel_type", "n_dim", "acq_func", "steps", "lr", "wd"]
+    )
     regret_df = regret_df["regret"].agg(["mean", "std", "count"])
     return regret_df
 
@@ -59,7 +60,9 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
                 Z[j, k] = np.nan
 
     # Create contour plot with slightly more levels for smoother visual appearance
-    contourf = ax.contourf(LR, WD, Z, levels=15, alpha=1.0, vmin=vmin, vmax=vmax)
+    contourf = ax.contourf(
+        LR, WD, Z, levels=15, alpha=1.0, vmin=vmin, vmax=vmax
+    )
 
     # Configure axes
     ax.set_xlabel("Learning Rate")
@@ -68,11 +71,13 @@ def _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col="mean"):
     ax.set_title(acq_func.replace("_", " ").title())
     ax.set_xscale("log")
     ax.grid(True, alpha=0.3)
-    
+
     # Adjust tick label positioning to prevent overlap
-    ax.tick_params(axis='x', pad=5)  # Add padding to x-axis tick labels
+    ax.tick_params(axis="x", pad=5)  # Add padding to x-axis tick labels
     if i == 0:
-        ax.tick_params(axis='y', pad=5)  # Add padding to y-axis tick labels only for first subplot
+        ax.tick_params(
+            axis="y", pad=5
+        )  # Add padding to y-axis tick labels only for first subplot
 
     return contourf
 
@@ -120,7 +125,9 @@ def _plot_contours(
         acq_data = data.loc[(acq_func, final_step)]
 
         # Create contour plot using helper function
-        contourf = _plot_contour(acq_data, acq_func, ax, i, vmin, vmax, value_col)
+        contourf = _plot_contour(
+            acq_data, acq_func, ax, i, vmin, vmax, value_col
+        )
 
     plt.tight_layout(pad=2.0)
 
@@ -130,7 +137,9 @@ def _plot_contours(
 
     # Add baseline annotations to colorbar
     _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col)
-    plt.suptitle(f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14)
+    plt.suptitle(
+        f"{kernel_type.upper()} Kernel Regret ({n_dim}D)", y=1.02, fontsize=14
+    )
 
     # Save figure
     filename = f"contour_{kernel_type.replace('/', '_')}_{n_dim}d.png"
@@ -141,7 +150,9 @@ def _plot_contours(
     plt.close()
 
 
-def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col="mean"):
+def _add_baseline_annotations(
+    cbar, data, final_steps, baseline_acqs, value_col="mean"
+):
     """Helper function to add baseline annotations to the colorbar."""
     if not baseline_acqs:
         return
@@ -153,9 +164,9 @@ def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col=
             baseline_value = baseline_data[value_col].iloc[0]
 
             # Use abbreviated names for common acquisition functions
-            acq_name = baseline_acq.replace("expected_improvement", "EI").replace(
-                "random_search", "RS"
-            )
+            acq_name = baseline_acq.replace(
+                "expected_improvement", "EI"
+            ).replace("random_search", "RS")
 
             # Position all annotations at the same horizontal offset
             x_offset = 1.3
@@ -171,7 +182,9 @@ def _add_baseline_annotations(cbar, data, final_steps, baseline_acqs, value_col=
                 fontsize=10,
                 ha="left",
                 va="center",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9),
+                bbox=dict(
+                    boxstyle="round,pad=0.3", facecolor="white", alpha=0.9
+                ),
             )
 
 
@@ -217,7 +230,9 @@ def plot_sweep_contours(
     save_dir.mkdir(exist_ok=True)
 
     # Get unique combinations of kernel_type and n_dim
-    kernel_dims = regret_df.index.droplevel(["acq_func", "steps", "lr", "wd"]).unique()
+    kernel_dims = regret_df.index.droplevel(
+        ["acq_func", "steps", "lr", "wd"]
+    ).unique()
 
     for kernel_type, n_dim in kernel_dims:
         # Filter data for this kernel_type and n_dim
@@ -254,8 +269,14 @@ print(regret_df.loc[("matern-3/2", 4)])
 plot_sweep_contours(
     regret_df,
     save_dir=str(SAVE_DIR / "contour_plots"),
-    sweep_acqs=["ves_gamma", "ves_mc_gamma"],  # Use what's available in your data
-    baseline_acqs=["expected_improvement", "random_search"],  # Multiple baselines
+    sweep_acqs=[
+        "ves_gamma",
+        "ves_mc_gamma",
+    ],  # Use what's available in your data
+    baseline_acqs=[
+        "expected_improvement",
+        "random_search",
+    ],  # Multiple baselines
     value_col="mean",
 )
 

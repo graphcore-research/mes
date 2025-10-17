@@ -35,7 +35,7 @@ def gaussian_log_likelihood(
     assert x.shape == mean.shape == std.shape, (
         f"x.shape: {x.shape}, mean.shape: {mean.shape}, log_std.shape: {std.shape}"
     )
-    lhood = half_log_pi_const - pt.log(std) - 0.5 * (x - mean)**2 / std**2
+    lhood = half_log_pi_const - pt.log(std) - 0.5 * (x - mean) ** 2 / std**2
 
     return lhood
 
@@ -47,7 +47,7 @@ def fit_lr_het_model(
     trend_basis_fun: Callable = None,
     noise_basis_fun: Callable = None,
     lr: float = 1e-2,
-    wd: float = 0.,
+    wd: float = 0.0,
     max_iters: int = 200,
     make_heatmap: bool = False,
 ) -> np.ndarray:
@@ -94,13 +94,13 @@ def fit_lr_het_model(
     # (n_x, 4): initialized constant mean and constant std
     params = pt.nn.Parameter(
         pt.concat(
-        [
-            pt.zeros(n_x, 1, **pt_params),
-            y_mean_emp,
-            pt.zeros(n_x, 1, **pt_params),
-            y_log_std_emp,
-        ],
-        axis=1
+            [
+                pt.zeros(n_x, 1, **pt_params),
+                y_mean_emp,
+                pt.zeros(n_x, 1, **pt_params),
+                y_log_std_emp,
+            ],
+            axis=1,
         )
     )
 
@@ -128,7 +128,9 @@ def fit_lr_het_model(
         # (1, ) <- (n_x, n_points)
         return -lhood.sum()
 
-    params, _ = optimize_adam(theta=params, loss_fn=loss_fun, lr=lr, wd=wd, max_iters=max_iters)
+    params, _ = optimize_adam(
+        theta=params, loss_fn=loss_fun, lr=lr, wd=wd, max_iters=max_iters
+    )
 
     m_trend = params[:, 0, None]
     c_trend = params[:, 1, None]
@@ -140,14 +142,16 @@ def fit_lr_het_model(
     epsilon_std = epsilon_std.clip(1e-6)
     gauss_lhood = gaussian_log_likelihood(x=y_pt, mean=y_trend, std=epsilon_std)
 
-
     gauss_lhood_vals = gauss_lhood.sum(dim=1).detach().cpu().numpy()
 
     if not make_heatmap:
         return gauss_lhood_vals
 
     else:
-        def make_heatmap(*, row_idx: int, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+
+        def make_heatmap(
+            *, row_idx: int, x: np.ndarray, y: np.ndarray
+        ) -> np.ndarray:
             """
             Make a heatmap of the Gaussian log likelihood for a given row of the data.
             """
@@ -172,7 +176,9 @@ def fit_lr_het_model(
             epsilon_std = pt.tensor(epsilon_std, **pt_params)
 
             # and then come back to numpy
-            gauss_lhood = gaussian_log_likelihood(x=y, mean=y_trend, std=epsilon_std)
+            gauss_lhood = gaussian_log_likelihood(
+                x=y, mean=y_trend, std=epsilon_std
+            )
             return gauss_lhood.detach().cpu().numpy()
-        
+
         return make_heatmap

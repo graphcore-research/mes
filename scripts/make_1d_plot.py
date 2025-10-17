@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from boplay.acq_funs.ei import expected_improvement
 from boplay.acq_funs.random import random_search
 from boplay.benchmark_data import Benchmark
 from boplay.bo_algorithm import BayesianOptimization
@@ -15,8 +14,9 @@ benchmark = Benchmark.load(DATA_DIR / "1d_dataset.json")
 
 x_grid = benchmark.x
 
-kernel = lambda x1, x2: KERNELS[benchmark.kernel_type](x1, x2, **benchmark.kernel_params)
-
+kernel = lambda x1, x2: KERNELS[benchmark.kernel_type](
+    x1, x2, **benchmark.kernel_params
+)
 
 
 y_true = benchmark.y[1, :]

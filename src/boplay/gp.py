@@ -32,7 +32,9 @@ class GaussianProcess:
 
         assert len(x_train.shape) == 2, "x must be a matrix"
 
-        assert x_train.shape[0] == y_train.shape[0], "x and y must have the same number of rows"
+        assert x_train.shape[0] == y_train.shape[0], (
+            "x and y must have the same number of rows"
+        )
 
         self.x_train = x_train
         self.y_train = y_train
@@ -88,13 +90,13 @@ class GaussianProcess:
         """
         np.random.seed(seed)
         mean, cov = self.predict(x_test=x_test)
-        
+
         cov += 1e-8 * np.eye(len(x_test))  # stability
         samples = np.random.multivariate_normal(
             mean.reshape(-1), cov, size=n_samples
         )
         return samples
-    
+
     def sample_prior(
         self,
         *,
