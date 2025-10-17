@@ -12,16 +12,16 @@ Collections of toy expertiments for approximating Max Value entropy Search
 
 # Setup
 ```
-# install pytorch first
-pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# install uv first
+https://docs.astral.sh/uv/getting-started/installation/
 
 # install the other dependencies
-pip install -e .
+uv venv
+uv pip install -e .
 ```
 
 # Usage
 This makes the images and animation
 ```
-cd scripts
-python main.py
+uv run pytest
 ```

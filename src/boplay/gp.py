@@ -5,7 +5,7 @@ class GaussianProcess:
     """1D Gaussian Process regression with Cholesky inference.
 
     Attributes:
-        X_train: 1D numpy array of training inputs.
+        x_train: 1D numpy array of training inputs.
         y_train: 1D numpy array of training targets.
         kernel: Callable kernel function k(x, x').
         noise: Scalar noise level added to the diagonal.
