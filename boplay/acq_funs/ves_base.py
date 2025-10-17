@@ -50,12 +50,13 @@ def optimize_adam(
         max_iters: int, the maximum number of iterations
         tol: float, the tolerance for the optimization
         lr: float, the learning rate for the optimization
+        wd: float, weight decay centered at 1
 
     Returns:
         theta: pt.Tensor, shape (n_x, 4)
         final_loss: float, the optimized loss
     """
-    opt = pt.optim.Adam([theta], lr=lr, amsgrad=True, weight_decay=wd)
+    opt = pt.optim.Adam([theta], lr=lr, amsgrad=True, weight_decay=0)
     prev_loss = float("inf")
     L = loss_fn(theta)
 
@@ -67,6 +68,11 @@ def optimize_adam(
         L = loss_fn(theta)
         L.backward()
         opt.step()
+        
+        # Apply custom weight decay centered at 1
+        if wd > 0:
+            with pt.no_grad():
+                theta.data -= wd * (theta.data - 1)
 
         # Early stopping
         if abs(prev_loss - L.item()) < tol:
