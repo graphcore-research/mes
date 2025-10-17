@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ves-is-1d-regression"
+version = "0.1.0"
+description = "Playing with MES/VES on toy settings"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Michael Pearce", email = "michaelp@graphcore.ai" },
+]
+
+dependencies = [
+    "imageio",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "pytest",
+    "scienceplots",
+    "scipy",
+    "scikit-learn",
+    "tqdm",
+    "torch",
+    # PyTorch with CUDA 12.8 wheel index
+    # "torch @ https://download.pytorch.org/whl/cu128",
+    # "torchvision @ https://download.pytorch.org/whl/cu128",
+]
+
+[project.urls]
+Homepage = "https://github.com/graphcore-research/mes"
+Repository = "https://github.com/graphcore-research/mes"
+Issues = "https://github.com/graphcore-research/mes"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
