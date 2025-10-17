@@ -2,7 +2,7 @@ from typing import Callable
 import numpy as np
 import torch as pt
 
-from boplay.acq_funs.ves_base import optimize_adam
+from boplay.acq_funs.regression_models.adam_optimizer import optimize_adam
 
 from boplay.acq_funs.pytorch_settings import PT_DTYPE, PT_DEVICE
 

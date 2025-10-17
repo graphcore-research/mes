@@ -38,9 +38,10 @@ Issues = "https://github.com/graphcore-research/mes"
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = "test_*"
+
 
 [dependency-groups]
 dev = [
@@ -63,7 +64,7 @@ exclude = [
 
 
 [tool.ruff.lint]
-ignore = ["E731"]
+ignore = ["E731"]  # lambda functions can be assigned to variables
 
 
 [tool.ruff.format]
