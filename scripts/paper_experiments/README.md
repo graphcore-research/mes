@@ -2,7 +2,7 @@
 
 1. Make the datasets: `python make_dataset.py`, this saves new JSON files in `benchmark_datasets`
 
-2. Open `run_benchmark_exp.py` and make a list of acquisition functions and benchmark datasets you want to run
+2. Open `run_benchmarks.py` and make a list of acquisition functions and benchmark datasets you want to run
 
 3. Run all the experiments `python run_benchmark_exp.py`
   - each call to this script makes a new results sub directory
